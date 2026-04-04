@@ -11,6 +11,8 @@ export default function Login() {
   const [isLogin, setIsLogin] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [companyName, setCompanyName] = useState('')
+  const [phone, setPhone] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { signIn, signUp, session } = useAuth()
   const navigate = useNavigate()
@@ -30,7 +32,10 @@ export default function Login() {
         toast.success('Acesso liberado. Bem-vindo ao Painel.')
         navigate('/')
       } else {
-        const { error } = await signUp(email, password)
+        const { error } = await signUp(email, password, {
+          company_name: companyName,
+          phone: phone,
+        })
         if (error) throw error
         toast.success(
           'Cadastro realizado. Verifique seu e-mail para confirmar.',
@@ -67,6 +72,45 @@ export default function Login() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {!isLogin && (
+            <>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="companyName"
+                  className="text-xs font-mono text-muted-text uppercase"
+                >
+                  Nome da Empresa
+                </Label>
+                <Input
+                  id="companyName"
+                  type="text"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  className="bg-black/50 border-white/10 text-white font-mono h-12 focus-visible:ring-horizon-gold/50 rounded-none"
+                  placeholder="Sua Empresa LTDA"
+                  required={!isLogin}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="phone"
+                  className="text-xs font-mono text-muted-text uppercase"
+                >
+                  Celular
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-black/50 border-white/10 text-white font-mono h-12 focus-visible:ring-horizon-gold/50 rounded-none"
+                  placeholder="(11) 99999-9999"
+                  required={!isLogin}
+                />
+              </div>
+            </>
+          )}
+
           <div className="space-y-2">
             <Label
               htmlFor="email"
