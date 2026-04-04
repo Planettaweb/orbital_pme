@@ -213,6 +213,27 @@ export type Database = {
           },
         ]
       }
+      roles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       tenant_users: {
         Row: {
           created_at: string
@@ -239,6 +260,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: 'tenant_users_role_fkey'
+            columns: ['role']
+            isOneToOne: false
+            referencedRelation: 'roles'
+            referencedColumns: ['name']
+          },
           {
             foreignKeyName: 'tenant_users_tenant_id_fkey'
             columns: ['tenant_id']
@@ -474,6 +502,11 @@ export const Constants = {
 //   status: text (not null, default: 'open'::text)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+// Table: roles
+//   id: uuid (not null, default: gen_random_uuid())
+//   name: text (not null)
+//   description: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: tenant_users
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -506,8 +539,12 @@ export const Constants = {
 //   FOREIGN KEY receivables_customer_id_fkey: FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 //   PRIMARY KEY receivables_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY receivables_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: roles
+//   UNIQUE roles_name_key: UNIQUE (name)
+//   PRIMARY KEY roles_pkey: PRIMARY KEY (id)
 // Table: tenant_users
 //   PRIMARY KEY tenant_users_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY tenant_users_role_fkey: FOREIGN KEY (role) REFERENCES roles(name) ON UPDATE CASCADE
 //   FOREIGN KEY tenant_users_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 //   UNIQUE tenant_users_tenant_id_user_id_key: UNIQUE (tenant_id, user_id)
 //   FOREIGN KEY tenant_users_user_id_fkey: FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
@@ -534,6 +571,9 @@ export const Constants = {
 // Table: receivables
 //   Policy "Receivables access" (ALL, PERMISSIVE) roles={public}
 //     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = receivables.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+// Table: roles
+//   Policy "roles_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
 // Table: tenant_users
 //   Policy "tenant_users_delete" (DELETE, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
@@ -570,7 +610,8 @@ export const Constants = {
 //       full_name = EXCLUDED.full_name,
 //       phone = EXCLUDED.phone;
 //
-//     IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL THEN
+//     -- Só cria o tenant se a empresa for de fato preenchida, como no fluxo obrigatório de cadastro
+//     IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL AND NEW.raw_user_meta_data->>'company_name' <> '' THEN
 //       new_tenant_id := gen_random_uuid();
 //
 //       INSERT INTO public.tenants (id, name, status, plan)
@@ -617,5 +658,7 @@ export const Constants = {
 //
 
 // --- INDEXES ---
+// Table: roles
+//   CREATE UNIQUE INDEX roles_name_key ON public.roles USING btree (name)
 // Table: tenant_users
 //   CREATE UNIQUE INDEX tenant_users_tenant_id_user_id_key ON public.tenant_users USING btree (tenant_id, user_id)

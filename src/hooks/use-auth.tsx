@@ -52,19 +52,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTenantId(null)
         setTenantStatus(null)
         setLoading(false)
+      } else {
+        setLoading(true)
       }
     })
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setUser(session?.user ?? null)
-      if (!session?.user) setLoading(false)
+      if (!session?.user) {
+        setLoading(false)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   useEffect(() => {
+    let mounted = true
     if (user?.id) {
+      setLoading(true)
       supabase
         .from('tenant_users')
         .select('tenant_id, role, status')
@@ -73,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .limit(1)
         .maybeSingle()
         .then(({ data, error }) => {
+          if (!mounted) return
           if (error) {
             console.error('Error fetching tenant role:', error)
           }
@@ -80,9 +87,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setTenantRole(data.role)
             setTenantId(data.tenant_id)
             setTenantStatus(data.status)
+          } else {
+            setTenantRole(null)
+            setTenantId(null)
+            setTenantStatus(null)
           }
           setLoading(false)
         })
+    }
+    return () => {
+      mounted = false
     }
   }, [user?.id])
 
