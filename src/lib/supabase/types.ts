@@ -315,7 +315,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_auth_user_admin_tenants: { Args: never; Returns: string[] }
+      get_auth_user_tenants: { Args: never; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
@@ -553,43 +554,63 @@ export const Constants = {
 
 // --- ROW LEVEL SECURITY POLICIES ---
 // Table: contracts
-//   Policy "Contracts access" (ALL, PERMISSIVE) roles={public}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = contracts.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+//   Policy "Contracts access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: customers
-//   Policy "Customers access" (ALL, PERMISSIVE) roles={public}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = customers.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+//   Policy "Customers access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: fiscal_documents
-//   Policy "Fiscal docs access" (ALL, PERMISSIVE) roles={public}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = fiscal_documents.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+//   Policy "Fiscal docs access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: profiles
 //   Policy "Profiles select" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: ((id = auth.uid()) OR (id IN ( SELECT tenant_users.user_id    FROM tenant_users   WHERE (tenant_users.tenant_id IN ( SELECT tenant_users_1.tenant_id            FROM tenant_users tenant_users_1           WHERE (tenant_users_1.user_id = auth.uid()))))))
+//     USING: ((id = auth.uid()) OR (id IN ( SELECT tenant_users.user_id    FROM tenant_users   WHERE (tenant_users.tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)))))
 //   Policy "Users can update own profile" (UPDATE, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = id)
 //   Policy "Users can view own profile" (SELECT, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = id)
 // Table: receivables
-//   Policy "Receivables access" (ALL, PERMISSIVE) roles={public}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = receivables.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+//   Policy "Receivables access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: roles
 //   Policy "roles_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
 // Table: tenant_users
 //   Policy "tenant_users_delete" (DELETE, PERMISSIVE) roles={authenticated}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
+//     USING: (tenant_id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
 //   Policy "tenant_users_insert" (INSERT, PERMISSIVE) roles={authenticated}
-//     WITH CHECK: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
+//     WITH CHECK: (tenant_id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
 //   Policy "tenant_users_select" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: (tenant_id IN ( SELECT tenant_users_1.tenant_id    FROM tenant_users tenant_users_1   WHERE (tenant_users_1.user_id = auth.uid())))
+//     USING: ((user_id = auth.uid()) OR (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)))
 //   Policy "tenant_users_update" (UPDATE, PERMISSIVE) roles={authenticated}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
+//     USING: (tenant_id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
 // Table: tenants
 //   Policy "Tenant access" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: (id IN ( SELECT tenant_users.tenant_id    FROM tenant_users   WHERE (tenant_users.user_id = auth.uid())))
+//     USING: (id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 //   Policy "Tenant update" (UPDATE, PERMISSIVE) roles={authenticated}
-//     USING: (id IN ( SELECT tenant_users.tenant_id    FROM tenant_users   WHERE ((tenant_users.user_id = auth.uid()) AND (tenant_users.role = 'admin'::text))))
+//     USING: (id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
 
 // --- DATABASE FUNCTIONS ---
+// FUNCTION get_auth_user_admin_tenants()
+//   CREATE OR REPLACE FUNCTION public.get_auth_user_admin_tenants()
+//    RETURNS SETOF uuid
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//    SET search_path TO 'public'
+//   AS $function$
+//     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() AND role = 'admin';
+//   $function$
+//
+// FUNCTION get_auth_user_tenants()
+//   CREATE OR REPLACE FUNCTION public.get_auth_user_tenants()
+//    RETURNS SETOF uuid
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//    SET search_path TO 'public'
+//   AS $function$
+//     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid();
+//   $function$
+//
 // FUNCTION handle_new_user()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user()
 //    RETURNS trigger
@@ -610,7 +631,6 @@ export const Constants = {
 //       full_name = EXCLUDED.full_name,
 //       phone = EXCLUDED.phone;
 //
-//     -- Só cria o tenant se a empresa for de fato preenchida, como no fluxo obrigatório de cadastro
 //     IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL AND NEW.raw_user_meta_data->>'company_name' <> '' THEN
 //       new_tenant_id := gen_random_uuid();
 //
@@ -618,7 +638,8 @@ export const Constants = {
 //       VALUES (new_tenant_id, NEW.raw_user_meta_data->>'company_name', 'active', 'freemium');
 //
 //       INSERT INTO public.tenant_users (tenant_id, user_id, role, status)
-//       VALUES (new_tenant_id, NEW.id, 'admin', 'active');
+//       VALUES (new_tenant_id, NEW.id, 'admin', 'active')
+//       ON CONFLICT (tenant_id, user_id) DO NOTHING;
 //     END IF;
 //
 //     RETURN NEW;

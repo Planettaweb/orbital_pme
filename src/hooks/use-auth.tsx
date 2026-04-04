@@ -14,6 +14,7 @@ export interface AuthContextType {
   tenantRole: string | null
   tenantId: string | null
   tenantStatus: string | null
+  isPlatformAdmin: boolean
   signUp: (
     email: string,
     password: string,
@@ -39,6 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [tenantRole, setTenantRole] = useState<string | null>(null)
   const [tenantId, setTenantId] = useState<string | null>(null)
   const [tenantStatus, setTenantStatus] = useState<string | null>(null)
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setTenantRole(null)
         setTenantId(null)
         setTenantStatus(null)
+        setIsPlatformAdmin(false)
         setLoading(false)
       } else {
         setLoading(true)
@@ -73,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(true)
       supabase
         .from('tenant_users')
-        .select('tenant_id, role, status')
+        .select('tenant_id, role, status, tenants(name, status)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: true })
         .limit(1)
@@ -86,11 +89,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (data) {
             setTenantRole(data.role)
             setTenantId(data.tenant_id)
-            setTenantStatus(data.status)
+
+            const tenantData = data.tenants as any
+            const tStatus = tenantData?.status
+            if (tStatus === 'blocked' || data.status === 'blocked') {
+              setTenantStatus('blocked')
+            } else if (tStatus === 'pending' || data.status === 'pending') {
+              setTenantStatus('pending')
+            } else {
+              setTenantStatus('active')
+            }
+
+            if (
+              data.role === 'admin' &&
+              tenantData?.name?.toLowerCase().includes('planettaweb')
+            ) {
+              setIsPlatformAdmin(true)
+            } else {
+              setIsPlatformAdmin(false)
+            }
           } else {
             setTenantRole(null)
             setTenantId(null)
             setTenantStatus(null)
+            setIsPlatformAdmin(false)
           }
           setLoading(false)
         })
@@ -169,6 +191,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         tenantRole,
         tenantId,
         tenantStatus,
+        isPlatformAdmin,
         signUp,
         signIn,
         signOut,

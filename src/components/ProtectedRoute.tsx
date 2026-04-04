@@ -5,11 +5,13 @@ import { Loader2 } from 'lucide-react'
 export function ProtectedRoute({
   children,
   requireAdmin = false,
+  requirePlatformAdmin = false,
 }: {
   children: React.ReactNode
   requireAdmin?: boolean
+  requirePlatformAdmin?: boolean
 }) {
-  const { user, loading, tenantRole, tenantStatus } = useAuth()
+  const { user, loading, tenantRole, tenantStatus, isPlatformAdmin } = useAuth()
 
   if (loading) {
     return (
@@ -33,6 +35,23 @@ export function ProtectedRoute({
         </p>
       </div>
     )
+  }
+
+  if (tenantStatus === 'blocked') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center space-y-4">
+        <h2 className="text-2xl font-bold text-destructive">
+          Acesso Bloqueado
+        </h2>
+        <p className="text-muted-foreground">
+          Sua licença ou acesso foi suspenso. Entre em contato com o suporte.
+        </p>
+      </div>
+    )
+  }
+
+  if (requirePlatformAdmin && !isPlatformAdmin) {
+    return <Navigate to="/dashboard" replace />
   }
 
   if (requireAdmin && tenantRole !== 'admin') {

@@ -19,6 +19,7 @@ import Settings from './pages/Settings'
 import Users from './pages/admin/Users'
 import Tenants from './pages/admin/Tenants'
 import Roles from './pages/admin/Roles'
+import Clients from './pages/admin/Clients'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 // ONLY IMPORT AND RENDER WORKING PAGES, NEVER ADD PLACEHOLDER COMPONENTS OR PAGES IN THIS FILE
@@ -69,6 +70,14 @@ const App = () => (
             />
 
             {/* Admin Routes */}
+            <Route
+              path="/admin/clients"
+              element={
+                <ProtectedRoute requirePlatformAdmin>
+                  <Clients />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin/users"
               element={
