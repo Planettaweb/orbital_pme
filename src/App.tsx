@@ -11,7 +11,9 @@ import Layout from './components/Layout'
 // AVOID REMOVING ANY CONTEXT PROVIDERS FROM THIS FILE (e.g. TooltipProvider, Toaster, Sonner)
 
 const App = () => (
-  <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
+  <BrowserRouter
+    future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
+  >
     <TooltipProvider>
       <Toaster />
       <Sonner />

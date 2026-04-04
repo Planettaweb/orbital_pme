@@ -27,8 +27,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter var', 'SF Pro Display', 'system-ui', 'sans-serif'],
-        display: ['SF Pro Display', 'Inter var', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['Playfair Display', 'serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -36,6 +37,15 @@ export default {
         ring: 'hsl(var(--ring))',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+
+        // Custom Orbital Finance Colors
+        void: '#030305',
+        starlight: '#E2E2E8',
+        'muted-text': '#6B6B78',
+        'horizon-gold': '#FFD28E',
+        'horizon-red': '#D66D50',
+        'telemetry-blue': '#7F9CBB',
+
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -92,11 +102,9 @@ export default {
         height: 'height',
       },
       boxShadow: {
-        subtle: '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+        subtle:
+          '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)',
         elevation: '0 4px 20px rgba(0, 0, 0, 0.05)',
-      },
-      transitionTimingFunction: {
-        apple: 'cubic-bezier(0.42, 0, 0.58, 1)',
       },
     },
   },

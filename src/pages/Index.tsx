@@ -1,10 +1,23 @@
-/* Home Page - Replace this page layout, components, content, behavior with what you want and translate to the language of the user */
+import { HeroSection } from '@/components/sections/HeroSection'
+import { TurbulenceSection } from '@/components/sections/TurbulenceSection'
+import { ModulesSection } from '@/components/sections/ModulesSection'
+import { ChaosOrbitSection } from '@/components/sections/ChaosOrbitSection'
+import { MissionSection } from '@/components/sections/MissionSection'
+import { SecuritySection } from '@/components/sections/SecuritySection'
+import { DashboardSection } from '@/components/sections/DashboardSection'
+import { FooterSection } from '@/components/sections/FooterSection'
+
 const Index = () => {
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">
-        This is a example page ready to be rewritten with your own content
-      </h1>
+    <div className="flex flex-col w-full">
+      <HeroSection />
+      <TurbulenceSection />
+      <ModulesSection />
+      <ChaosOrbitSection />
+      <MissionSection />
+      <SecuritySection />
+      <DashboardSection />
+      <FooterSection />
     </div>
   )
 }
