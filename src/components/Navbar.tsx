@@ -15,22 +15,38 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          {['COBRANÇA VIVA', 'FISCALPULSE', 'CONTRATO VIVO'].map((item) => (
-            <Link
-              key={item}
-              to="#"
-              className="text-xs font-mono tracking-widest text-muted-text hover:text-white transition-colors"
-            >
-              {item}
-            </Link>
-          ))}
+          <Link
+            to="/quem-somos"
+            className="text-xs font-mono tracking-widest text-muted-text hover:text-white transition-colors"
+          >
+            QUEM SOMOS
+          </Link>
+          <Link
+            to="/modulos"
+            className="text-xs font-mono tracking-widest text-muted-text hover:text-white transition-colors"
+          >
+            MÓDULOS
+          </Link>
+          <Link
+            to="/contato"
+            className="text-xs font-mono tracking-widest text-muted-text hover:text-white transition-colors"
+          >
+            CONTATO
+          </Link>
+          <Link
+            to="/termos"
+            className="text-xs font-mono tracking-widest text-muted-text hover:text-white transition-colors"
+          >
+            TERMOS
+          </Link>
         </nav>
 
         <Button
+          asChild
           variant="outline"
           className="rounded-none border border-horizon-gold/30 text-horizon-gold hover:bg-horizon-gold hover:text-void transition-all duration-300 font-mono text-xs tracking-wider"
         >
-          ACESSO_SEGURO
+          <Link to="/login">ACESSO_SEGURO</Link>
         </Button>
       </div>
     </header>

@@ -15,7 +15,267 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contracts: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          party_name: string
+          start_date: string
+          status: string
+          tenant_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          party_name: string
+          start_date: string
+          status?: string
+          tenant_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          party_name?: string
+          start_date?: string
+          status?: string
+          tenant_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'contracts_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          created_at: string
+          document: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          document?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'customers_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      fiscal_documents: {
+        Row: {
+          created_at: string
+          document_number: string
+          id: string
+          issue_date: string
+          risk_level: string | null
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_number: string
+          id?: string
+          issue_date: string
+          risk_level?: string | null
+          status?: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          document_number?: string
+          id?: string
+          issue_date?: string
+          risk_level?: string | null
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'fiscal_documents_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      receivables: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string
+          due_date: string
+          id: string
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          customer_id: string
+          due_date: string
+          id?: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string
+          due_date?: string
+          id?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'receivables_customer_id_fkey'
+            columns: ['customer_id']
+            isOneToOne: false
+            referencedRelation: 'customers'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'receivables_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      tenant_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'tenant_users_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'tenant_users_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      tenants: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          plan: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          plan?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          plan?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -162,7 +422,134 @@ export const Constants = {
 // Use the COLUMN TYPES section below to know the real PostgreSQL type for each column.
 // Always use the correct PostgreSQL type when writing SQL migrations.
 
+// --- COLUMN TYPES (actual PostgreSQL types) ---
+// Use this to know the real database type when writing migrations.
+// "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: contracts
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   title: text (not null)
+//   party_name: text (not null)
+//   start_date: date (not null)
+//   end_date: date (not null)
+//   status: text (not null, default: 'active'::text)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
+// Table: customers
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   name: text (not null)
+//   document: text (nullable)
+//   email: text (nullable)
+//   phone: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
+// Table: fiscal_documents
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   document_number: text (not null)
+//   issue_date: date (not null)
+//   status: text (not null, default: 'valid'::text)
+//   risk_level: text (nullable, default: 'low'::text)
+//   created_at: timestamp with time zone (not null, default: now())
+// Table: profiles
+//   id: uuid (not null)
+//   email: text (not null)
+//   full_name: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
+// Table: receivables
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   customer_id: uuid (not null)
+//   amount: numeric (not null)
+//   due_date: date (not null)
+//   status: text (not null, default: 'open'::text)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
+// Table: tenant_users
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   user_id: uuid (not null)
+//   role: text (not null, default: 'operator'::text)
+//   created_at: timestamp with time zone (not null, default: now())
+// Table: tenants
+//   id: uuid (not null, default: gen_random_uuid())
+//   name: text (not null)
+//   status: text (not null, default: 'active'::text)
+//   plan: text (not null, default: 'freemium'::text)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
+
+// --- CONSTRAINTS ---
+// Table: contracts
+//   PRIMARY KEY contracts_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY contracts_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: customers
+//   PRIMARY KEY customers_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY customers_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: fiscal_documents
+//   PRIMARY KEY fiscal_documents_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY fiscal_documents_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: profiles
+//   FOREIGN KEY profiles_id_fkey: FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+//   PRIMARY KEY profiles_pkey: PRIMARY KEY (id)
+// Table: receivables
+//   FOREIGN KEY receivables_customer_id_fkey: FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+//   PRIMARY KEY receivables_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY receivables_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: tenant_users
+//   PRIMARY KEY tenant_users_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY tenant_users_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+//   UNIQUE tenant_users_tenant_id_user_id_key: UNIQUE (tenant_id, user_id)
+//   FOREIGN KEY tenant_users_user_id_fkey: FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
+// Table: tenants
+//   PRIMARY KEY tenants_pkey: PRIMARY KEY (id)
+
+// --- ROW LEVEL SECURITY POLICIES ---
+// Table: contracts
+//   Policy "Contracts access" (ALL, PERMISSIVE) roles={public}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = contracts.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+// Table: customers
+//   Policy "Customers access" (ALL, PERMISSIVE) roles={public}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = customers.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+// Table: fiscal_documents
+//   Policy "Fiscal docs access" (ALL, PERMISSIVE) roles={public}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = fiscal_documents.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+// Table: profiles
+//   Policy "Users can update own profile" (UPDATE, PERMISSIVE) roles={public}
+//     USING: (auth.uid() = id)
+//   Policy "Users can view own profile" (SELECT, PERMISSIVE) roles={public}
+//     USING: (auth.uid() = id)
+// Table: receivables
+//   Policy "Receivables access" (ALL, PERMISSIVE) roles={public}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = receivables.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+// Table: tenants
+//   Policy "Tenant access" (ALL, PERMISSIVE) roles={public}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = tenants.id) AND (tenant_users.user_id = auth.uid()))))
+
+// --- WARNING: TABLES WITH RLS ENABLED BUT NO POLICIES ---
+// These tables have Row Level Security enabled but NO policies defined.
+// This means ALL queries (SELECT, INSERT, UPDATE, DELETE) will return ZERO rows
+// for non-superuser roles (including the anon and authenticated roles used by the app).
+// You MUST create RLS policies for these tables to allow data access.
+//   - tenant_users
+
 // --- DATABASE FUNCTIONS ---
+// FUNCTION handle_new_user()
+//   CREATE OR REPLACE FUNCTION public.handle_new_user()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     INSERT INTO public.profiles (id, email, full_name)
+//     VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name')
+//     ON CONFLICT (id) DO NOTHING;
+//     RETURN NEW;
+//   END;
+//   $function$
+//
 // FUNCTION rls_auto_enable()
 //   CREATE OR REPLACE FUNCTION public.rls_auto_enable()
 //    RETURNS event_trigger
@@ -194,3 +581,7 @@ export const Constants = {
 //   END;
 //   $function$
 //
+
+// --- INDEXES ---
+// Table: tenant_users
+//   CREATE UNIQUE INDEX tenant_users_tenant_id_user_id_key ON public.tenant_users USING btree (tenant_id, user_id)

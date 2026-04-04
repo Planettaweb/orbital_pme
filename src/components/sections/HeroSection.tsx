@@ -1,5 +1,6 @@
 import { ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
 
 export function HeroSection() {
   return (
@@ -24,18 +25,36 @@ export function HeroSection() {
           </div>
 
           <div
-            className="flex flex-col sm:flex-row gap-4 animate-fade-in-up"
+            className="flex flex-col sm:flex-row gap-4 animate-fade-in-up flex-wrap"
             style={{ animationDelay: '0.4s' }}
           >
-            <Button className="h-14 px-8 bg-transparent border border-horizon-gold/30 text-horizon-gold hover:bg-horizon-gold hover:text-void hover:shadow-[0_0_20px_rgba(255,210,142,0.3)] transition-all duration-300 group rounded-none">
-              <span className="mr-2">Acessar Painel</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <Button
+              asChild
+              className="h-14 px-8 bg-transparent border border-horizon-gold/30 text-horizon-gold hover:bg-horizon-gold hover:text-void hover:shadow-[0_0_20px_rgba(255,210,142,0.3)] transition-all duration-300 group rounded-none"
+            >
+              <Link to="/login">
+                <span className="mr-2">Acessar Painel</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
             </Button>
             <Button
+              asChild
               variant="ghost"
               className="h-14 px-8 border border-muted text-starlight hover:bg-white/5 hover:border-white hover:text-white rounded-none"
             >
-              Ver Módulos
+              <Link to="/modulos">Ver Módulos</Link>
+            </Button>
+            <Button
+              asChild
+              className="h-14 px-8 bg-telemetry-blue/10 border border-telemetry-blue/30 text-telemetry-blue hover:bg-telemetry-blue hover:text-void transition-all duration-300 group rounded-none"
+            >
+              <a
+                href="https://wa.me/5511999999999"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Falar com Consultor
+              </a>
             </Button>
           </div>
 
