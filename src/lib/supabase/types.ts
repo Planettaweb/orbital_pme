@@ -317,6 +317,7 @@ export type Database = {
     Functions: {
       get_auth_user_admin_tenants: { Args: never; Returns: string[] }
       get_auth_user_tenants: { Args: never; Returns: string[] }
+      is_platform_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -564,7 +565,7 @@ export const Constants = {
 //     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: profiles
 //   Policy "Profiles select" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: ((id = auth.uid()) OR (id IN ( SELECT tenant_users.user_id    FROM tenant_users   WHERE (tenant_users.tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)))))
+//     USING: ((id = auth.uid()) OR (id IN ( SELECT tenant_users.user_id    FROM tenant_users   WHERE (tenant_users.tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)))) OR is_platform_admin())
 //   Policy "Users can update own profile" (UPDATE, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = id)
 //   Policy "Users can view own profile" (SELECT, PERMISSIVE) roles={public}
@@ -581,14 +582,14 @@ export const Constants = {
 //   Policy "tenant_users_insert" (INSERT, PERMISSIVE) roles={authenticated}
 //     WITH CHECK: (tenant_id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
 //   Policy "tenant_users_select" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: ((user_id = auth.uid()) OR (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)))
+//     USING: ((user_id = auth.uid()) OR (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)) OR is_platform_admin())
 //   Policy "tenant_users_update" (UPDATE, PERMISSIVE) roles={authenticated}
-//     USING: (tenant_id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
+//     USING: ((tenant_id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants)) OR is_platform_admin())
 // Table: tenants
 //   Policy "Tenant access" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: (id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
+//     USING: ((id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)) OR is_platform_admin())
 //   Policy "Tenant update" (UPDATE, PERMISSIVE) roles={authenticated}
-//     USING: (id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants))
+//     USING: ((id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants)) OR is_platform_admin())
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION get_auth_user_admin_tenants()
@@ -644,6 +645,23 @@ export const Constants = {
 //
 //     RETURN NEW;
 //   END;
+//   $function$
+//
+// FUNCTION is_platform_admin()
+//   CREATE OR REPLACE FUNCTION public.is_platform_admin()
+//    RETURNS boolean
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//    SET search_path TO 'public'
+//   AS $function$
+//     SELECT EXISTS (
+//       SELECT 1
+//       FROM tenant_users tu
+//       JOIN tenants t ON tu.tenant_id = t.id
+//       WHERE tu.user_id = auth.uid()
+//         AND tu.role = 'admin'
+//         AND t.name ILIKE 'Planettaweb%'
+//     );
 //   $function$
 //
 // FUNCTION rls_auto_enable()

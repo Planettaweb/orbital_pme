@@ -14,22 +14,187 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { toast } from 'sonner'
-import { Loader2, Building2, Shield, CalendarDays } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
+import {
+  Loader2,
+  Building2,
+  CalendarDays,
+  Plus,
+  Activity,
+  Users,
+  Database,
+} from 'lucide-react'
 
 type Tenant = {
   id: string
   name: string
   status: string
   plan: string
+  user_limit: number
+  record_limit: number
+  active_alerts: boolean
   created_at: string
   user_count?: number
+}
+
+function TenantForm({
+  tenant,
+  onSuccess,
+  onCancel,
+}: {
+  tenant?: Tenant | null
+  onSuccess: () => void
+  onCancel: () => void
+}) {
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: tenant?.name || '',
+    status: tenant?.status || 'trial',
+    plan: tenant?.plan || 'freemium',
+    user_limit: tenant?.user_limit || 10,
+    record_limit: tenant?.record_limit || 1000,
+    active_alerts: tenant?.active_alerts ?? true,
+  })
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      if (tenant?.id) {
+        const { error } = await supabase
+          .from('tenants')
+          .update(formData)
+          .eq('id', tenant.id)
+        if (error) throw error
+        toast.success('Cliente atualizado com sucesso!')
+      } else {
+        const { error } = await supabase
+          .from('tenants')
+          .insert([{ ...formData, id: crypto.randomUUID() }])
+        if (error) throw error
+        toast.success('Cliente criado com sucesso!')
+      }
+      onSuccess()
+    } catch (err: any) {
+      toast.error('Erro ao salvar: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Nome da Empresa</Label>
+        <Input
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Status da Licença</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(v) => setFormData({ ...formData, status: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="active">Ativo</SelectItem>
+              <SelectItem value="suspended">Suspenso</SelectItem>
+              <SelectItem value="trial">Trial</SelectItem>
+              <SelectItem value="cancelled">Cancelado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Plano</Label>
+          <Select
+            value={formData.plan}
+            onValueChange={(v) => setFormData({ ...formData, plan: v })}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="freemium">Freemium</SelectItem>
+              <SelectItem value="pro">Pro</SelectItem>
+              <SelectItem value="enterprise">Enterprise</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Limite de Usuários</Label>
+          <Input
+            type="number"
+            value={formData.user_limit}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                user_limit: parseInt(e.target.value) || 0,
+              })
+            }
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Limite de Registros</Label>
+          <Input
+            type="number"
+            value={formData.record_limit}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                record_limit: parseInt(e.target.value) || 0,
+              })
+            }
+            required
+          />
+        </div>
+      </div>
+      <div className="flex items-center space-x-2 pt-2">
+        <Switch
+          checked={formData.active_alerts}
+          onCheckedChange={(c) =>
+            setFormData({ ...formData, active_alerts: c })
+          }
+        />
+        <Label>Alertas Ativos no Sistema</Label>
+      </div>
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading ? 'Salvando...' : 'Salvar Cliente'}
+        </Button>
+      </div>
+    </form>
+  )
 }
 
 export default function Clients() {
   const [loading, setLoading] = useState(true)
   const [tenants, setTenants] = useState<Tenant[]>([])
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingTenant, setEditingTenant] = useState<Tenant | null>(null)
 
   useEffect(() => {
     fetchTenants()
@@ -39,22 +204,15 @@ export default function Clients() {
     try {
       const { data, error } = await supabase
         .from('tenants')
-        .select(
-          `
-          id, name, status, plan, created_at,
-          tenant_users(count)
-        `,
-        )
+        .select('*, tenant_users(count)')
         .order('created_at', { ascending: false })
-
       if (error) throw error
-
-      const formatted = (data as any[]).map((t) => ({
-        ...t,
-        user_count: t.tenant_users[0]?.count || 0,
-      }))
-
-      setTenants(formatted)
+      setTenants(
+        (data as any[]).map((t) => ({
+          ...t,
+          user_count: t.tenant_users[0]?.count || 0,
+        })),
+      )
     } catch (error: any) {
       toast.error('Erro ao carregar clientes: ' + error.message)
     } finally {
@@ -62,42 +220,54 @@ export default function Clients() {
     }
   }
 
-  const updateTenantStatus = async (tenantId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('tenants')
-        .update({ status: newStatus })
-        .eq('id', tenantId)
-
-      if (error) throw error
-
-      setTenants((prev) =>
-        prev.map((t) => (t.id === tenantId ? { ...t, status: newStatus } : t)),
-      )
-      toast.success('Status da licença atualizado com sucesso!')
-    } catch (error: any) {
-      toast.error('Erro ao atualizar licença: ' + error.message)
-    }
+  const handleEdit = (tenant: Tenant) => {
+    setEditingTenant(tenant)
+    setIsModalOpen(true)
   }
 
-  if (loading) {
+  if (loading)
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
-  }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 animate-fade-in-up">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Gerenciar Licenças
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Painel exclusivo Planettaweb. Controle o acesso e o status de todos os
-          clientes (Tenants) cadastrados na plataforma.
-        </p>
+    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in-up">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Painel SaaS (Planettaweb)
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Gerencie clientes, limites de uso, planos e configurações
+            multitenant.
+          </p>
+        </div>
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={() => setEditingTenant(null)}>
+              <Plus className="w-4 h-4 mr-2" /> Novo Cliente
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {editingTenant
+                  ? 'Editar Configurações do Cliente'
+                  : 'Cadastrar Novo Cliente'}
+              </DialogTitle>
+            </DialogHeader>
+            <TenantForm
+              tenant={editingTenant}
+              onSuccess={() => {
+                setIsModalOpen(false)
+                fetchTenants()
+              }}
+              onCancel={() => setIsModalOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -112,7 +282,7 @@ export default function Clients() {
                   variant={
                     tenant.status === 'active'
                       ? 'default'
-                      : tenant.status === 'pending'
+                      : tenant.status === 'trial'
                         ? 'secondary'
                         : 'destructive'
                   }
@@ -127,47 +297,48 @@ export default function Clients() {
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-auto space-y-4">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4" />
-                  Plano
-                </span>
-                <span className="font-medium capitalize">{tenant.plan}</span>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="space-y-1">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Building2 className="w-4 h-4" /> Plano
+                  </span>
+                  <p className="font-medium capitalize">{tenant.plan}</p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Activity className="w-4 h-4" /> Alertas
+                  </span>
+                  <p className="font-medium">
+                    {tenant.active_alerts ? 'Ativados' : 'Desativados'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Users className="w-4 h-4" /> Usuários
+                  </span>
+                  <p className="font-medium">
+                    {tenant.user_count} / {tenant.user_limit || '∞'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Database className="w-4 h-4" /> Registros
+                  </span>
+                  <p className="font-medium">{tenant.record_limit || '∞'}</p>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center gap-1.5">
-                  <Shield className="w-4 h-4" />
-                  Usuários
-                </span>
-                <span className="font-medium">{tenant.user_count}</span>
-              </div>
-
-              <div className="pt-4 border-t space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Ação Rápida (Acesso)
-                </label>
-                <Select
-                  value={tenant.status}
-                  onValueChange={(val) => updateTenantStatus(tenant.id, val)}
+              <div className="pt-4 border-t">
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => handleEdit(tenant)}
                 >
-                  <SelectTrigger className="w-full h-9">
-                    <SelectValue placeholder="Alterar status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">
-                      Liberar Acesso (Active)
-                    </SelectItem>
-                    <SelectItem value="pending">
-                      Suspender Temporariamente (Pending)
-                    </SelectItem>
-                    <SelectItem value="blocked">Bloquear (Blocked)</SelectItem>
-                  </SelectContent>
-                </Select>
+                  Configurar Parâmetros
+                </Button>
               </div>
             </CardContent>
           </Card>
         ))}
-
         {tenants.length === 0 && (
           <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-lg">
             Nenhum cliente cadastrado ainda.

@@ -10,13 +10,15 @@ import {
   User as UserIcon,
   LogOut,
   Menu,
+  Building2,
+  Settings2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ThemeProvider } from './theme-provider'
 
 export default function Layout() {
-  const { user, signOut } = useAuth()
+  const { user, signOut, isPlatformAdmin } = useAuth()
   const { isAdmin } = usePermissions()
   const location = useLocation()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -132,6 +134,15 @@ export default function Layout() {
                   <div className="pt-4 pb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
                     Administração
                   </div>
+                  {isPlatformAdmin && (
+                    <Link
+                      to="/admin/clients"
+                      className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium text-horizon-gold"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      Empresas (Tenants)
+                    </Link>
+                  )}
                   <Link
                     to="/admin/users"
                     className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
@@ -140,10 +151,17 @@ export default function Layout() {
                     Usuários
                   </Link>
                   <Link
-                    to="/admin/tenants"
+                    to="/admin/roles"
                     className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
                   >
                     <Shield className="w-4 h-4" />
+                    Cargos & Permissões
+                  </Link>
+                  <Link
+                    to="/admin/tenants"
+                    className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                  >
+                    <Settings2 className="w-4 h-4" />
                     Organização
                   </Link>
                 </>
