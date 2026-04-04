@@ -69,8 +69,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .from('tenant_users')
         .select('tenant_id, role, status')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: true })
+        .limit(1)
         .maybeSingle()
-        .then(({ data }) => {
+        .then(({ data, error }) => {
+          if (error) {
+            console.error('Error fetching tenant role:', error)
+          }
           if (data) {
             setTenantRole(data.role)
             setTenantId(data.tenant_id)

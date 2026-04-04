@@ -44,7 +44,9 @@ export default function Profile() {
           .from('tenant_users')
           .select('tenants(name)')
           .eq('user_id', user.id)
-          .single()
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle()
 
         if (tenantData?.tenants) {
           // @ts-expect-error - Supabase nested relations type casting
@@ -97,7 +99,11 @@ export default function Profile() {
       ? 'Administrador'
       : role === 'analyst'
         ? 'Analista'
-        : 'Visualizador'
+        : role === 'viewer'
+          ? 'Visualizador'
+          : role === 'operator'
+            ? 'Operador'
+            : 'Sem Acesso / Pendente'
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in-up">

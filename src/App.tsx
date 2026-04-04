@@ -18,6 +18,7 @@ import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Users from './pages/admin/Users'
 import Tenants from './pages/admin/Tenants'
+import Roles from './pages/admin/Roles'
 import { ProtectedRoute } from './components/ProtectedRoute'
 
 // ONLY IMPORT AND RENDER WORKING PAGES, NEVER ADD PLACEHOLDER COMPONENTS OR PAGES IN THIS FILE
@@ -81,6 +82,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <Tenants />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/roles"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <Roles />
                 </ProtectedRoute>
               }
             />

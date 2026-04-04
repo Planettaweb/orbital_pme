@@ -218,6 +218,7 @@ export type Database = {
           created_at: string
           id: string
           role: string
+          status: string
           tenant_id: string
           user_id: string
         }
@@ -225,6 +226,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          status?: string
           tenant_id: string
           user_id: string
         }
@@ -232,6 +234,7 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          status?: string
           tenant_id?: string
           user_id?: string
         }
@@ -477,6 +480,7 @@ export const Constants = {
 //   user_id: uuid (not null)
 //   role: text (not null, default: 'operator'::text)
 //   created_at: timestamp with time zone (not null, default: now())
+//   status: text (not null, default: 'active'::text)
 // Table: tenants
 //   id: uuid (not null, default: gen_random_uuid())
 //   name: text (not null)
@@ -521,6 +525,8 @@ export const Constants = {
 //   Policy "Fiscal docs access" (ALL, PERMISSIVE) roles={public}
 //     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = fiscal_documents.tenant_id) AND (tenant_users.user_id = auth.uid()))))
 // Table: profiles
+//   Policy "Profiles select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: ((id = auth.uid()) OR (id IN ( SELECT tenant_users.user_id    FROM tenant_users   WHERE (tenant_users.tenant_id IN ( SELECT tenant_users_1.tenant_id            FROM tenant_users tenant_users_1           WHERE (tenant_users_1.user_id = auth.uid()))))))
 //   Policy "Users can update own profile" (UPDATE, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = id)
 //   Policy "Users can view own profile" (SELECT, PERMISSIVE) roles={public}
@@ -528,16 +534,20 @@ export const Constants = {
 // Table: receivables
 //   Policy "Receivables access" (ALL, PERMISSIVE) roles={public}
 //     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = receivables.tenant_id) AND (tenant_users.user_id = auth.uid()))))
+// Table: tenant_users
+//   Policy "tenant_users_delete" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
+//   Policy "tenant_users_insert" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
+//   Policy "tenant_users_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT tenant_users_1.tenant_id    FROM tenant_users tenant_users_1   WHERE (tenant_users_1.user_id = auth.uid())))
+//   Policy "tenant_users_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM tenant_users tenant_users_1   WHERE ((tenant_users_1.user_id = auth.uid()) AND (tenant_users_1.tenant_id = tenant_users_1.tenant_id) AND (tenant_users_1.role = 'admin'::text))))
 // Table: tenants
-//   Policy "Tenant access" (ALL, PERMISSIVE) roles={public}
-//     USING: (EXISTS ( SELECT 1    FROM tenant_users   WHERE ((tenant_users.tenant_id = tenants.id) AND (tenant_users.user_id = auth.uid()))))
-
-// --- WARNING: TABLES WITH RLS ENABLED BUT NO POLICIES ---
-// These tables have Row Level Security enabled but NO policies defined.
-// This means ALL queries (SELECT, INSERT, UPDATE, DELETE) will return ZERO rows
-// for non-superuser roles (including the anon and authenticated roles used by the app).
-// You MUST create RLS policies for these tables to allow data access.
-//   - tenant_users
+//   Policy "Tenant access" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (id IN ( SELECT tenant_users.tenant_id    FROM tenant_users   WHERE (tenant_users.user_id = auth.uid())))
+//   Policy "Tenant update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: (id IN ( SELECT tenant_users.tenant_id    FROM tenant_users   WHERE ((tenant_users.user_id = auth.uid()) AND (tenant_users.role = 'admin'::text))))
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION handle_new_user()
@@ -549,7 +559,6 @@ export const Constants = {
 //   DECLARE
 //     new_tenant_id uuid;
 //   BEGIN
-//     -- Insert into profiles
 //     INSERT INTO public.profiles (id, email, full_name, phone)
 //     VALUES (
 //       NEW.id,
@@ -561,15 +570,14 @@ export const Constants = {
 //       full_name = EXCLUDED.full_name,
 //       phone = EXCLUDED.phone;
 //
-//     -- If company_name is provided in metadata, create a new tenant
 //     IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL THEN
 //       new_tenant_id := gen_random_uuid();
 //
 //       INSERT INTO public.tenants (id, name, status, plan)
 //       VALUES (new_tenant_id, NEW.raw_user_meta_data->>'company_name', 'active', 'freemium');
 //
-//       INSERT INTO public.tenant_users (tenant_id, user_id, role)
-//       VALUES (new_tenant_id, NEW.id, 'admin');
+//       INSERT INTO public.tenant_users (tenant_id, user_id, role, status)
+//       VALUES (new_tenant_id, NEW.id, 'admin', 'active');
 //     END IF;
 //
 //     RETURN NEW;
