@@ -10,12 +10,12 @@ export function Navbar() {
             <div className="w-2 h-2 bg-white rounded-full" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white">
-            ORBITAL<span className="font-light text-muted-text">_FINANCE</span>
+            ORBITAL<span className="font-light text-muted-text">_PME</span>
           </span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">
-          {['PLATFORM', 'INTELLIGENCE', 'COMPLIANCE'].map((item) => (
+          {['COBRANÇA VIVA', 'FISCALPULSE', 'CONTRATO VIVO'].map((item) => (
             <Link
               key={item}
               to="#"
@@ -30,7 +30,7 @@ export function Navbar() {
           variant="outline"
           className="rounded-none border border-horizon-gold/30 text-horizon-gold hover:bg-horizon-gold hover:text-void transition-all duration-300 font-mono text-xs tracking-wider"
         >
-          LOGIN_SECURE
+          ACESSO_SEGURO
         </Button>
       </div>
     </header>

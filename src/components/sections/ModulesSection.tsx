@@ -1,31 +1,30 @@
-import { Radar, ScrollText, Cpu, Activity } from 'lucide-react'
+import { Radar, ScrollText, Cpu, ShieldCheck } from 'lucide-react'
 import { GlassCard } from '@/components/GlassCard'
-import { Switch } from '@/components/ui/switch'
 
 const modules = [
   {
-    title: 'Signal Capture',
+    title: 'Cobrança Viva',
     icon: Radar,
     description:
-      'Ingest transaction data from any banking or ERP endpoint in real-time.',
+      'Aumente a eficiência de cobrança e reduza inadimplência com automação inteligente e réguas de recebimento.',
   },
   {
-    title: 'Reconciliation Engine',
+    title: 'FiscalPulse PME',
     icon: Cpu,
     description:
-      'AI-driven matching logic with 99.9% accuracy on high-volume datasets.',
+      'Reduza o risco fiscal e inconsistências com alertas preventivos e monitoramento de divergências.',
   },
   {
-    title: 'Journal Automation',
+    title: 'Contrato Vivo',
     icon: ScrollText,
     description:
-      'Auto-post adjusting entries and accruals based on predefined rulesets.',
+      'Transforme contratos em instrumentos ativos de gestão com controle de vigência e riscos ocultos.',
   },
   {
-    title: 'Continuous Monitor',
-    icon: Activity,
+    title: 'Segurança Total',
+    icon: ShieldCheck,
     description:
-      'Always-on anomaly detection to catch irregularities before close.',
+      'Isolamento de dados por empresa (multi-tenant) com trilhas de auditoria contínuas e seguras.',
   },
 ]
 
@@ -41,7 +40,7 @@ export function ModulesSection() {
           <div className="absolute right-1 w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-amber-600 shadow-[0_0_15px_rgba(245,158,11,0.5)] z-10" />
         </div>
         <span className="text-horizon-gold font-mono text-sm tracking-widest font-bold shadow-amber-500/20 drop-shadow-lg">
-          AUTONOMOUS
+          AUTÔNOMO
         </span>
       </div>
 

@@ -1,45 +1,50 @@
-import { ShieldCheck } from 'lucide-react'
-import { GlassCard } from '@/components/GlassCard'
+import { Shield, Lock, Server } from 'lucide-react'
 
 export function SecuritySection() {
   return (
-    <section className="py-12 container mx-auto px-4">
-      <GlassCard className="flex flex-col lg:flex-row items-center justify-between p-12 gap-12 bg-white/[0.02]">
-        <div className="flex-1 space-y-6">
-          <h2 className="text-3xl font-serif text-white">
-            Built for High Gravity
+    <section className="py-24 bg-void">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-serif text-white mb-4">
+            Segurança Enterprise
           </h2>
-          <p className="text-muted-text max-w-lg">
-            Enterprise-grade security architecture designed to withstand the
-            pressure of regulatory audits and data sovereignty requirements.
+          <p className="text-muted-text">
+            Seus dados protegidos por arquitetura de ponta.
           </p>
-          <ul className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-sm text-starlight pt-4">
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-horizon-gold rounded-full" />
-              SOC2 TYPE II
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-horizon-gold rounded-full" />
-              IMMUTABLE LOGGING
-            </li>
-            <li className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-horizon-gold rounded-full" />
-              RBAC
-            </li>
-          </ul>
         </div>
-
-        <div className="relative flex-shrink-0">
-          <div className="absolute inset-0 bg-horizon-gold/20 rounded-full blur-2xl animate-pulse-slow" />
-          <div className="relative w-32 h-32 rounded-full border border-horizon-gold/30 bg-void/50 flex items-center justify-center">
-            <ShieldCheck className="w-12 h-12 text-horizon-gold" />
-            <div
-              className="absolute inset-0 rounded-full border border-horizon-gold/10 animate-ping opacity-20"
-              style={{ animationDuration: '3s' }}
-            />
+        <div className="grid md:grid-cols-3 gap-8 text-center">
+          <div className="flex flex-col items-center">
+            <Shield className="w-12 h-12 text-telemetry-blue mb-4" />
+            <h3 className="text-white font-medium mb-2">
+              Isolamento Multi-Tenant
+            </h3>
+            <p className="text-muted-text text-sm">
+              Dados de cada empresa rigorosamente separados, garantindo total
+              privacidade e controle.
+            </p>
+          </div>
+          <div className="flex flex-col items-center">
+            <Lock className="w-12 h-12 text-telemetry-blue mb-4" />
+            <h3 className="text-white font-medium mb-2">
+              Criptografia Avançada
+            </h3>
+            <p className="text-muted-text text-sm">
+              Proteção máxima em trânsito e em repouso com as melhores práticas
+              de mercado.
+            </p>
+          </div>
+          <div className="flex flex-col items-center">
+            <Server className="w-12 h-12 text-telemetry-blue mb-4" />
+            <h3 className="text-white font-medium mb-2">
+              Alta Disponibilidade
+            </h3>
+            <p className="text-muted-text text-sm">
+              Infraestrutura redundante com uptime garantido, suportando
+              operações de missão crítica.
+            </p>
           </div>
         </div>
-      </GlassCard>
+      </div>
     </section>
   )
 }
