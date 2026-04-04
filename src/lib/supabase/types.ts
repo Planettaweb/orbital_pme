@@ -144,6 +144,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          phone: string | null
           updated_at: string
         }
         Insert: {
@@ -151,6 +152,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          phone?: string | null
           updated_at?: string
         }
         Update: {
@@ -158,6 +160,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -458,6 +461,7 @@ export const Constants = {
 //   full_name: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+//   phone: text (nullable)
 // Table: receivables
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -542,10 +546,32 @@ export const Constants = {
 //    LANGUAGE plpgsql
 //    SECURITY DEFINER
 //   AS $function$
+//   DECLARE
+//     new_tenant_id uuid;
 //   BEGIN
-//     INSERT INTO public.profiles (id, email, full_name)
-//     VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name')
-//     ON CONFLICT (id) DO NOTHING;
+//     -- Insert into profiles
+//     INSERT INTO public.profiles (id, email, full_name, phone)
+//     VALUES (
+//       NEW.id,
+//       NEW.email,
+//       NEW.raw_user_meta_data->>'full_name',
+//       NEW.raw_user_meta_data->>'phone'
+//     )
+//     ON CONFLICT (id) DO UPDATE SET
+//       full_name = EXCLUDED.full_name,
+//       phone = EXCLUDED.phone;
+//
+//     -- If company_name is provided in metadata, create a new tenant
+//     IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL THEN
+//       new_tenant_id := gen_random_uuid();
+//
+//       INSERT INTO public.tenants (id, name, status, plan)
+//       VALUES (new_tenant_id, NEW.raw_user_meta_data->>'company_name', 'active', 'freemium');
+//
+//       INSERT INTO public.tenant_users (tenant_id, user_id, role)
+//       VALUES (new_tenant_id, NEW.id, 'admin');
+//     END IF;
+//
 //     RETURN NEW;
 //   END;
 //   $function$

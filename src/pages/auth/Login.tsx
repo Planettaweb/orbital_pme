@@ -161,7 +161,7 @@ export default function Login() {
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex flex-col items-center space-y-4">
           <button
             type="button"
             onClick={() => setIsLogin(!isLogin)}
@@ -171,6 +171,16 @@ export default function Login() {
               ? 'Primeiro acesso? Cadastre-se aqui.'
               : 'Já possui acesso? Faça login.'}
           </button>
+
+          {isLogin && (
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="text-xs font-mono text-muted-text hover:text-white transition-colors border-b border-transparent hover:border-white pb-1"
+            >
+              Esqueci minha senha
+            </button>
+          )}
         </div>
       </div>
     </div>
