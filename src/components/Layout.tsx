@@ -19,6 +19,7 @@ import {
   Calculator,
   CheckSquare,
   BarChart3,
+  X,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -114,23 +115,42 @@ export default function Layout() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <div className="min-h-screen bg-background text-foreground flex">
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static',
+            'fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 ease-in-out md:translate-x-0 md:static flex flex-col',
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
           )}
         >
-          <div className="h-16 flex items-center px-6 border-b">
-            <Link to="/" className="flex items-center gap-2">
+          <div className="h-16 shrink-0 flex items-center justify-between px-6 border-b">
+            <Link
+              to="/"
+              className="flex items-center gap-2"
+              onClick={() => setIsSidebarOpen(false)}
+            >
               <Shield className="w-6 h-6 text-primary" />
               <span className="font-bold text-lg">Orbital Finance</span>
             </Link>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="md:hidden p-2 -mr-2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <div className="p-4 flex flex-col h-[calc(100vh-4rem)]">
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col">
             <nav className="space-y-2 flex-1">
               <Link
                 to="/dashboard"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <LayoutDashboard className="w-4 h-4" />
@@ -144,6 +164,7 @@ export default function Layout() {
                   {isPlatformAdmin && (
                     <Link
                       to="/admin/clients"
+                      onClick={() => setIsSidebarOpen(false)}
                       className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium text-horizon-gold"
                     >
                       <Building2 className="w-4 h-4" />
@@ -152,6 +173,7 @@ export default function Layout() {
                   )}
                   <Link
                     to="/admin/users"
+                    onClick={() => setIsSidebarOpen(false)}
                     className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
                   >
                     <Users className="w-4 h-4" />
@@ -159,6 +181,7 @@ export default function Layout() {
                   </Link>
                   <Link
                     to="/admin/roles"
+                    onClick={() => setIsSidebarOpen(false)}
                     className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
                   >
                     <Shield className="w-4 h-4" />
@@ -166,6 +189,7 @@ export default function Layout() {
                   </Link>
                   <Link
                     to="/admin/tenants"
+                    onClick={() => setIsSidebarOpen(false)}
                     className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
                   >
                     <Settings2 className="w-4 h-4" />
@@ -179,6 +203,7 @@ export default function Layout() {
               </div>
               <Link
                 to="/cobranca/clientes"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <Users className="w-4 h-4" />
@@ -186,6 +211,7 @@ export default function Layout() {
               </Link>
               <Link
                 to="/cobranca/recebiveis"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <Wallet className="w-4 h-4" />
@@ -193,6 +219,7 @@ export default function Layout() {
               </Link>
               <Link
                 to="/cobranca/reguas"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <GitBranch className="w-4 h-4" />
@@ -200,6 +227,7 @@ export default function Layout() {
               </Link>
               <Link
                 to="/cobranca/integracoes"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <Share2 className="w-4 h-4" />
@@ -211,6 +239,7 @@ export default function Layout() {
               </div>
               <Link
                 to="/fiscal/documentos"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <FileText className="w-4 h-4" />
@@ -218,6 +247,7 @@ export default function Layout() {
               </Link>
               <Link
                 to="/fiscal/apuracao"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <Calculator className="w-4 h-4" />
@@ -225,6 +255,7 @@ export default function Layout() {
               </Link>
               <Link
                 to="/fiscal/certidoes"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <CheckSquare className="w-4 h-4" />
@@ -232,15 +263,17 @@ export default function Layout() {
               </Link>
               <Link
                 to="/fiscal/relatorios"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <BarChart3 className="w-4 h-4" />
                 Relatórios Fiscais
               </Link>
             </nav>
-            <div className="border-t pt-4 space-y-2">
+            <div className="border-t pt-4 mt-4 shrink-0 space-y-2">
               <Link
                 to="/profile"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <UserIcon className="w-4 h-4" />
@@ -248,13 +281,17 @@ export default function Layout() {
               </Link>
               <Link
                 to="/settings"
+                onClick={() => setIsSidebarOpen(false)}
                 className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
               >
                 <Settings className="w-4 h-4" />
                 Configurações
               </Link>
               <button
-                onClick={() => signOut()}
+                onClick={() => {
+                  setIsSidebarOpen(false)
+                  signOut()
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-destructive hover:text-destructive-foreground text-sm font-medium transition-colors"
               >
                 <LogOut className="w-4 h-4" />
