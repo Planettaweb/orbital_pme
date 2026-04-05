@@ -21,7 +21,7 @@ export default function AboutUs() {
             <div className="text-lg text-muted-text space-y-6 leading-relaxed text-left max-w-2xl mx-auto">
               <p>
                 O Orbital PME nasceu da expertise da{' '}
-                <strong>Planetta Web</strong>, uma agência focada em criar
+                <strong>Planettaweb</strong>, uma empresa focada em criar
                 soluções tecnológicas robustas e escaláveis para negócios do
                 futuro.
               </p>
@@ -50,7 +50,7 @@ export default function AboutUs() {
                   rel="noopener noreferrer"
                   className="flex items-center gap-2"
                 >
-                  CONHEÇA A PLANETTA WEB
+                  CONHEÇA A PLANETTAWEB
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </Button>
