@@ -12,6 +12,9 @@ import {
   Menu,
   Building2,
   Settings2,
+  Wallet,
+  GitBranch,
+  Share2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -166,6 +169,38 @@ export default function Layout() {
                   </Link>
                 </>
               )}
+
+              <div className="pt-4 pb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
+                Cobrança Viva
+              </div>
+              <Link
+                to="/cobranca/clientes"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <Users className="w-4 h-4" />
+                Clientes
+              </Link>
+              <Link
+                to="/cobranca/recebiveis"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <Wallet className="w-4 h-4" />
+                Títulos & Faturas
+              </Link>
+              <Link
+                to="/cobranca/reguas"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <GitBranch className="w-4 h-4" />
+                Régua de Cobrança
+              </Link>
+              <Link
+                to="/cobranca/integracoes"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <Share2 className="w-4 h-4" />
+                Integrações (API)
+              </Link>
             </nav>
             <div className="border-t pt-4 space-y-2">
               <Link

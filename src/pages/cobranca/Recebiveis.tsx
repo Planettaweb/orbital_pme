@@ -1,0 +1,331 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { useTenant } from '@/hooks/use-tenant'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Modal } from '@/components/ui/modal'
+import { Plus, Upload, Calendar, Handshake, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
+
+export default function Recebiveis() {
+  const { activeTenant } = useTenant()
+  const [receivables, setReceivables] = useState<any[]>([])
+  const [customers, setCustomers] = useState<any[]>([])
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isPromiseModalOpen, setIsPromiseModalOpen] = useState(false)
+  const [selectedReceivable, setSelectedReceivable] = useState<string | null>(
+    null,
+  )
+  const [loading, setLoading] = useState(false)
+
+  const [formData, setFormData] = useState({
+    customer_id: '',
+    amount: '',
+    due_date: '',
+    status: 'open',
+  })
+  const [promiseData, setPromiseData] = useState({
+    promise_date: '',
+    notes: '',
+  })
+
+  const fetchData = async () => {
+    if (!activeTenant) return
+    const [recvRes, custRes] = await Promise.all([
+      supabase
+        .from('receivables')
+        .select('*, customer:customers(name)')
+        .eq('tenant_id', activeTenant)
+        .order('due_date', { ascending: true }),
+      supabase
+        .from('customers')
+        .select('id, name')
+        .eq('tenant_id', activeTenant),
+    ])
+    if (recvRes.data) setReceivables(recvRes.data)
+    if (custRes.data) setCustomers(custRes.data)
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [activeTenant])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeTenant) return
+    setLoading(true)
+    const { error } = await supabase
+      .from('receivables')
+      .insert([
+        {
+          ...formData,
+          tenant_id: activeTenant,
+          amount: parseFloat(formData.amount),
+        },
+      ])
+    if (error) toast.error('Erro ao salvar título')
+    else {
+      toast.success('Título cadastrado!')
+      setIsModalOpen(false)
+      fetchData()
+      setFormData({ customer_id: '', amount: '', due_date: '', status: 'open' })
+    }
+    setLoading(false)
+  }
+
+  const handlePromiseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeTenant || !selectedReceivable) return
+    setLoading(true)
+    const { error } = await supabase.from('billing_actions').insert([
+      {
+        tenant_id: activeTenant,
+        receivable_id: selectedReceivable,
+        type: 'promise',
+        status: 'completed',
+        promise_date: promiseData.promise_date,
+        notes: promiseData.notes,
+      },
+    ])
+    if (error) toast.error('Erro ao registrar promessa')
+    else {
+      toast.success('Promessa registrada com sucesso!')
+      setIsPromiseModalOpen(false)
+      setPromiseData({ promise_date: '', notes: '' })
+      await supabase
+        .from('receivables')
+        .update({ status: 'promised' })
+        .eq('id', selectedReceivable)
+      fetchData()
+    }
+    setLoading(false)
+  }
+
+  const statusColors: any = {
+    open: 'text-blue-600 bg-blue-500/10',
+    overdue: 'text-rose-600 bg-rose-500/10',
+    paid: 'text-emerald-600 bg-emerald-500/10',
+    promised: 'text-amber-600 bg-amber-500/10',
+  }
+  const statusLabels: any = {
+    open: 'Aberto',
+    overdue: 'Atrasado',
+    paid: 'Pago',
+    promised: 'Promessa',
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Títulos e Faturas
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Acompanhe recebíveis e registre promessas de pagamento.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => toast.info('Importação em desenvolvimento.')}
+          >
+            <Upload className="w-4 h-4" /> Importar
+          </Button>
+          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+            <Plus className="w-4 h-4" /> Novo Título
+          </Button>
+        </div>
+      </div>
+
+      <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-muted-foreground uppercase bg-muted/40 border-b">
+              <tr>
+                <th className="px-6 py-3 font-medium">Cliente</th>
+                <th className="px-6 py-3 font-medium">Valor</th>
+                <th className="px-6 py-3 font-medium">Vencimento</th>
+                <th className="px-6 py-3 font-medium">Status</th>
+                <th className="px-6 py-3 font-medium text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {receivables.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-muted-foreground"
+                  >
+                    Nenhum título cadastrado.
+                  </td>
+                </tr>
+              ) : (
+                receivables.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="hover:bg-muted/50 transition-colors"
+                  >
+                    <td className="px-6 py-4 font-medium">
+                      {r.customer?.name}
+                    </td>
+                    <td className="px-6 py-4">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(r.amount)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        {new Date(r.due_date).toLocaleDateString('pt-BR')}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${statusColors[r.status] || statusColors.open}`}
+                      >
+                        {statusLabels[r.status] || r.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {r.status !== 'paid' && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
+                          onClick={() => {
+                            setSelectedReceivable(r.id)
+                            setIsPromiseModalOpen(true)
+                          }}
+                        >
+                          <Handshake className="w-3 h-3 mr-1" /> Promessa
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Novo Título"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Cliente</label>
+            <select
+              required
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={formData.customer_id}
+              onChange={(e) =>
+                setFormData({ ...formData, customer_id: e.target.value })
+              }
+            >
+              <option value="">Selecione um cliente...</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Valor (R$)</label>
+              <Input
+                type="number"
+                step="0.01"
+                required
+                value={formData.amount}
+                onChange={(e) =>
+                  setFormData({ ...formData, amount: e.target.value })
+                }
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Vencimento</label>
+              <Input
+                type="date"
+                required
+                value={formData.due_date}
+                onChange={(e) =>
+                  setFormData({ ...formData, due_date: e.target.value })
+                }
+              />
+            </div>
+          </div>
+          <div className="pt-4 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar Título'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isPromiseModalOpen}
+        onClose={() => setIsPromiseModalOpen(false)}
+        title="Registrar Promessa"
+      >
+        <form onSubmit={handlePromiseSubmit} className="space-y-4">
+          <div className="bg-blue-500/10 p-3 rounded-md flex items-start gap-3 text-blue-700 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p>
+              A promessa suspende temporariamente a régua de cobrança automática
+              para este título.
+            </p>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Data Prometida</label>
+            <Input
+              type="date"
+              required
+              value={promiseData.promise_date}
+              onChange={(e) =>
+                setPromiseData({ ...promiseData, promise_date: e.target.value })
+              }
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Observações</label>
+            <textarea
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Detalhes da negociação..."
+              value={promiseData.notes}
+              onChange={(e) =>
+                setPromiseData({ ...promiseData, notes: e.target.value })
+              }
+            />
+          </div>
+          <div className="pt-4 flex justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsPromiseModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Confirmar'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
+    </div>
+  )
+}

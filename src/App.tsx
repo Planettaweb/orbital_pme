@@ -21,6 +21,10 @@ import Tenants from './pages/admin/Tenants'
 import Roles from './pages/admin/Roles'
 import Clients from './pages/admin/Clients'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import ClientesCob from './pages/cobranca/Clientes'
+import RecebiveisCob from './pages/cobranca/Recebiveis'
+import ReguasCob from './pages/cobranca/Reguas'
+import IntegracoesCob from './pages/cobranca/Integracoes'
 
 // ONLY IMPORT AND RENDER WORKING PAGES, NEVER ADD PLACEHOLDER COMPONENTS OR PAGES IN THIS FILE
 // AVOID REMOVING ANY CONTEXT PROVIDERS FROM THIS FILE (e.g. TooltipProvider, Toaster, Sonner)
@@ -99,6 +103,40 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <Roles />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Cobrança Routes */}
+            <Route
+              path="/cobranca/clientes"
+              element={
+                <ProtectedRoute>
+                  <ClientesCob />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cobranca/recebiveis"
+              element={
+                <ProtectedRoute>
+                  <RecebiveisCob />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cobranca/reguas"
+              element={
+                <ProtectedRoute>
+                  <ReguasCob />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cobranca/integracoes"
+              element={
+                <ProtectedRoute>
+                  <IntegracoesCob />
                 </ProtectedRoute>
               }
             />

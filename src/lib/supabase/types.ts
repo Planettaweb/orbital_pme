@@ -285,28 +285,43 @@ export type Database = {
       }
       tenants: {
         Row: {
+          active_alerts: boolean | null
+          branding: Json | null
           created_at: string
+          enabled_integrations: Json | null
           id: string
           name: string
           plan: string
+          record_limit: number | null
           status: string
           updated_at: string
+          user_limit: number | null
         }
         Insert: {
+          active_alerts?: boolean | null
+          branding?: Json | null
           created_at?: string
+          enabled_integrations?: Json | null
           id?: string
           name: string
           plan?: string
+          record_limit?: number | null
           status?: string
           updated_at?: string
+          user_limit?: number | null
         }
         Update: {
+          active_alerts?: boolean | null
+          branding?: Json | null
           created_at?: string
+          enabled_integrations?: Json | null
           id?: string
           name?: string
           plan?: string
+          record_limit?: number | null
           status?: string
           updated_at?: string
+          user_limit?: number | null
         }
         Relationships: []
       }
@@ -523,6 +538,11 @@ export const Constants = {
 //   plan: text (not null, default: 'freemium'::text)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+//   user_limit: integer (nullable, default: 10)
+//   record_limit: integer (nullable, default: 1000)
+//   active_alerts: boolean (nullable, default: true)
+//   enabled_integrations: jsonb (nullable, default: '[]'::jsonb)
+//   branding: jsonb (nullable, default: '{"logo": "", "primary_color": "#000000"}'::jsonb)
 
 // --- CONSTRAINTS ---
 // Table: contracts
@@ -588,6 +608,10 @@ export const Constants = {
 // Table: tenants
 //   Policy "Tenant access" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: ((id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants)) OR is_platform_admin())
+//   Policy "Tenant delete" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: is_platform_admin()
+//   Policy "Tenant insert" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: is_platform_admin()
 //   Policy "Tenant update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: ((id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants)) OR is_platform_admin())
 
