@@ -97,7 +97,9 @@ export default function AboutUs() {
             className="rounded-full px-10 py-6 text-lg font-medium shadow-xl hover:shadow-primary/25 transition-all"
             asChild
           >
-            <Link to="/">Conhecer Soluções</Link>
+            <Link to="https://planettaweb.com.br">
+              Conheça mais a nossa empresa.
+            </Link>
           </Button>
         </div>
       </div>
