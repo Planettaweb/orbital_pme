@@ -29,6 +29,7 @@ import DocumentosFiscais from './pages/fiscal/Documentos'
 import ApuracaoFiscal from './pages/fiscal/Apuracao'
 import CertidoesFiscais from './pages/fiscal/Certidoes'
 import RelatoriosFiscais from './pages/fiscal/Relatorios'
+import Contratos from './pages/contratos/Contratos'
 
 // ONLY IMPORT AND RENDER WORKING PAGES, NEVER ADD PLACEHOLDER COMPONENTS OR PAGES IN THIS FILE
 // AVOID REMOVING ANY CONTEXT PROVIDERS FROM THIS FILE (e.g. TooltipProvider, Toaster, Sonner)
@@ -175,6 +176,16 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <RelatoriosFiscais />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Contrato Vivo Routes */}
+            <Route
+              path="/contratos"
+              element={
+                <ProtectedRoute>
+                  <Contratos />
                 </ProtectedRoute>
               }
             />
