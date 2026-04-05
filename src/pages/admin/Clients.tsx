@@ -49,6 +49,8 @@ type Tenant = {
   active_alerts: boolean
   created_at: string
   user_count?: number
+  max_files_per_contract?: number
+  max_file_size_mb?: number
 }
 
 function TenantForm({
@@ -68,6 +70,8 @@ function TenantForm({
     user_limit: tenant?.user_limit || 10,
     record_limit: tenant?.record_limit || 1000,
     active_alerts: tenant?.active_alerts ?? true,
+    max_files_per_contract: tenant?.max_files_per_contract ?? 5,
+    max_file_size_mb: tenant?.max_file_size_mb ?? 10,
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,95 +101,147 @@ function TenantForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label>Nome da Empresa</Label>
-        <Input
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          required
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-yellow-500 uppercase tracking-wider border-b border-border/50 pb-2">
+          Dados Principais
+        </h3>
         <div className="space-y-2">
-          <Label>Status da Licença</Label>
-          <Select
-            value={formData.status}
-            onValueChange={(v) => setFormData({ ...formData, status: v })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="active">Ativo</SelectItem>
-              <SelectItem value="suspended">Suspenso</SelectItem>
-              <SelectItem value="trial">Trial</SelectItem>
-              <SelectItem value="cancelled">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label>Plano</Label>
-          <Select
-            value={formData.plan}
-            onValueChange={(v) => setFormData({ ...formData, plan: v })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="freemium">Freemium</SelectItem>
-              <SelectItem value="pro">Pro</SelectItem>
-              <SelectItem value="enterprise">Enterprise</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Limite de Usuários</Label>
+          <Label>Nome da Empresa</Label>
           <Input
-            type="number"
-            value={formData.user_limit}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                user_limit: parseInt(e.target.value) || 0,
-              })
-            }
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             required
           />
         </div>
-        <div className="space-y-2">
-          <Label>Limite de Registros</Label>
-          <Input
-            type="number"
-            value={formData.record_limit}
-            onChange={(e) =>
-              setFormData({
-                ...formData,
-                record_limit: parseInt(e.target.value) || 0,
-              })
-            }
-            required
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Status da Licença</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(v) => setFormData({ ...formData, status: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="suspended">Suspenso</SelectItem>
+                <SelectItem value="trial">Trial</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Plano</Label>
+            <Select
+              value={formData.plan}
+              onValueChange={(v) => setFormData({ ...formData, plan: v })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="freemium">Freemium</SelectItem>
+                <SelectItem value="pro">Pro</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
-      <div className="flex items-center space-x-2 pt-2">
-        <Switch
-          checked={formData.active_alerts}
-          onCheckedChange={(c) =>
-            setFormData({ ...formData, active_alerts: c })
-          }
-        />
-        <Label>Alertas Ativos no Sistema</Label>
+
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-yellow-500 uppercase tracking-wider border-b border-border/50 pb-2">
+          Limites de Uso
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Limite de Usuários</Label>
+            <Input
+              type="number"
+              value={formData.user_limit}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  user_limit: parseInt(e.target.value) || 0,
+                })
+              }
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Limite de Registros</Label>
+            <Input
+              type="number"
+              value={formData.record_limit}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  record_limit: parseInt(e.target.value) || 0,
+                })
+              }
+              required
+            />
+          </div>
+        </div>
       </div>
+
+      <div className="space-y-4">
+        <h3 className="text-sm font-semibold text-yellow-500 uppercase tracking-wider border-b border-border/50 pb-2">
+          Armazenamento de Contratos
+        </h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Qtd. Máx. de Arquivos</Label>
+            <Input
+              type="number"
+              value={formData.max_files_per_contract}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  max_files_per_contract: parseInt(e.target.value) || 0,
+                })
+              }
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Tamanho Máx. (MB)</Label>
+            <Input
+              type="number"
+              value={formData.max_file_size_mb}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  max_file_size_mb: parseInt(e.target.value) || 0,
+                })
+              }
+              required
+            />
+          </div>
+        </div>
+        <div className="flex items-center space-x-2 pt-2">
+          <Switch
+            checked={formData.active_alerts}
+            onCheckedChange={(c) =>
+              setFormData({ ...formData, active_alerts: c })
+            }
+          />
+          <Label>Alertas Ativos no Sistema</Label>
+        </div>
+      </div>
+
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Salvando...' : 'Salvar Cliente'}
+        <Button
+          type="submit"
+          disabled={loading}
+          className="bg-yellow-500 text-black hover:bg-yellow-600"
+        >
+          {loading ? 'Salvando...' : 'Salvar Parâmetros'}
         </Button>
       </div>
     </form>
@@ -274,9 +330,9 @@ export default function Clients() {
               <Plus className="w-4 h-4 mr-2" /> Novo Cliente
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
+              <DialogTitle className="text-yellow-500 text-xl">
                 {editingTenant
                   ? 'Editar Configurações do Cliente'
                   : 'Cadastrar Novo Cliente'}
@@ -371,6 +427,16 @@ export default function Clients() {
                     <Database className="w-4 h-4" /> Registros
                   </span>
                   <p className="font-medium">{tenant.record_limit || '∞'}</p>
+                </div>
+                <div className="col-span-2 space-y-1 mt-2">
+                  <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                    <Database className="w-3.5 h-3.5 text-yellow-500" />{' '}
+                    Armazenamento (Contratos)
+                  </span>
+                  <p className="font-medium text-xs">
+                    {tenant.max_files_per_contract || 5} arq. /{' '}
+                    {tenant.max_file_size_mb || 10}MB
+                  </p>
                 </div>
               </div>
               <div className="pt-4 border-t">
