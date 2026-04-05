@@ -28,6 +28,7 @@ export default function Clientes() {
     email: '',
     phone: '',
     risk_level: 'low',
+    payment_behavior: 'punctual',
   }
   const [formData, setFormData] = useState(defaultForm)
 
@@ -56,6 +57,7 @@ export default function Clientes() {
       email: formData.email,
       phone: formData.phone,
       risk_level: formData.risk_level,
+      payment_behavior: formData.payment_behavior,
       tenant_id: activeTenant,
     }
 
@@ -93,6 +95,7 @@ export default function Clientes() {
         email: customer.email || '',
         phone: customer.phone || '',
         risk_level: customer.risk_level || 'low',
+        payment_behavior: customer.payment_behavior || 'punctual',
       })
     } else {
       setFormData(defaultForm)
@@ -116,6 +119,14 @@ export default function Clientes() {
     low: 'Baixo Risco',
     medium: 'Risco Médio',
     high: 'Alto Risco',
+  }
+
+  const behaviorLabels: Record<string, string> = {
+    punctual: 'Paga sempre no prazo',
+    late: 'Paga com atraso',
+    very_late: 'Paga com muito atraso',
+    default: 'Inadimplente (não pagou)',
+    partial: 'Paga parcialmente',
   }
 
   return (
@@ -188,8 +199,10 @@ export default function Clientes() {
                         {c.phone || 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 capitalize">
-                      {c.payment_behavior || 'N/A'}
+                    <td className="px-6 py-4">
+                      {behaviorLabels[c.payment_behavior] ||
+                        c.payment_behavior ||
+                        'N/A'}
                     </td>
                     <td className="px-6 py-4">
                       <span
@@ -279,20 +292,40 @@ export default function Clientes() {
               placeholder="email@exemplo.com"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Nível de Risco</label>
-            <select
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              value={formData.risk_level}
-              onChange={(e) =>
-                setFormData({ ...formData, risk_level: e.target.value })
-              }
-            >
-              <option value="low">Baixo Risco</option>
-              <option value="medium">Risco Médio</option>
-              <option value="high">Alto Risco</option>
-            </select>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nível de Risco</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={formData.risk_level}
+                onChange={(e) =>
+                  setFormData({ ...formData, risk_level: e.target.value })
+                }
+              >
+                <option value="low">Baixo Risco</option>
+                <option value="medium">Risco Médio</option>
+                <option value="high">Alto Risco</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Comportamento</label>
+              <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={formData.payment_behavior}
+                onChange={(e) =>
+                  setFormData({ ...formData, payment_behavior: e.target.value })
+                }
+              >
+                <option value="punctual">Paga sempre no prazo</option>
+                <option value="late">Paga com atraso</option>
+                <option value="very_late">Paga com muito atraso</option>
+                <option value="default">Inadimplente (não pagou)</option>
+                <option value="partial">Paga parcialmente</option>
+              </select>
+            </div>
           </div>
+
           <div className="pt-4 flex justify-end gap-2">
             <Button
               type="button"
