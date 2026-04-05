@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.5'
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -45,11 +45,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'api_keys_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "api_keys_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -92,18 +92,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'billing_actions_receivable_id_fkey'
-            columns: ['receivable_id']
+            foreignKeyName: "billing_actions_receivable_id_fkey"
+            columns: ["receivable_id"]
             isOneToOne: false
-            referencedRelation: 'receivables'
-            referencedColumns: ['id']
+            referencedRelation: "receivables"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'billing_actions_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "billing_actions_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -143,11 +143,59 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'billing_rules_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "billing_rules_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_attachments: {
+        Row: {
+          content_type: string
+          contract_id: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          tenant_id: string
+        }
+        Insert: {
+          content_type: string
+          contract_id: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          tenant_id: string
+        }
+        Update: {
+          content_type?: string
+          contract_id?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_attachments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_attachments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -156,42 +204,48 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
+          last_notified_at: string | null
           party_name: string
           start_date: string
           status: string
           tenant_id: string
           title: string
           updated_at: string
+          value: number | null
         }
         Insert: {
           created_at?: string
           end_date: string
           id?: string
+          last_notified_at?: string | null
           party_name: string
           start_date: string
           status?: string
           tenant_id: string
           title: string
           updated_at?: string
+          value?: number | null
         }
         Update: {
           created_at?: string
           end_date?: string
           id?: string
+          last_notified_at?: string | null
           party_name?: string
           start_date?: string
           status?: string
           tenant_id?: string
           title?: string
           updated_at?: string
+          value?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: 'contracts_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "contracts_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -234,11 +288,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'customers_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "customers_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -272,11 +326,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'fiscal_certificates_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "fiscal_certificates_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -310,11 +364,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'fiscal_documents_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "fiscal_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -345,11 +399,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'fiscal_monthly_stats_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "fiscal_monthly_stats_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -383,11 +437,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'fiscal_taxes_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "fiscal_taxes_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -451,18 +505,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'receivables_customer_id_fkey'
-            columns: ['customer_id']
+            foreignKeyName: "receivables_customer_id_fkey"
+            columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: 'customers'
-            referencedColumns: ['id']
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'receivables_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "receivables_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -514,25 +568,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'tenant_users_role_fkey'
-            columns: ['role']
+            foreignKeyName: "tenant_users_role_fkey"
+            columns: ["role"]
             isOneToOne: false
-            referencedRelation: 'roles'
-            referencedColumns: ['name']
+            referencedRelation: "roles"
+            referencedColumns: ["name"]
           },
           {
-            foreignKeyName: 'tenant_users_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "tenant_users_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'tenant_users_user_id_fkey'
-            columns: ['user_id']
+            foreignKeyName: "tenant_users_user_id_fkey"
+            columns: ["user_id"]
             isOneToOne: false
-            referencedRelation: 'profiles'
-            referencedColumns: ['id']
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -543,6 +597,8 @@ export type Database = {
           created_at: string
           enabled_integrations: Json | null
           id: string
+          max_file_size_mb: number | null
+          max_files_per_contract: number | null
           name: string
           plan: string
           record_limit: number | null
@@ -556,6 +612,8 @@ export type Database = {
           created_at?: string
           enabled_integrations?: Json | null
           id?: string
+          max_file_size_mb?: number | null
+          max_files_per_contract?: number | null
           name: string
           plan?: string
           record_limit?: number | null
@@ -569,6 +627,8 @@ export type Database = {
           created_at?: string
           enabled_integrations?: Json | null
           id?: string
+          max_file_size_mb?: number | null
+          max_files_per_contract?: number | null
           name?: string
           plan?: string
           record_limit?: number | null
@@ -611,11 +671,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'webhooks_tenant_id_fkey'
-            columns: ['tenant_id']
+            foreignKeyName: "webhooks_tenant_id_fkey"
+            columns: ["tenant_id"]
             isOneToOne: false
-            referencedRelation: 'tenants'
-            referencedColumns: ['id']
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -627,6 +687,8 @@ export type Database = {
       get_auth_user_admin_tenants: { Args: never; Returns: string[] }
       get_auth_user_tenants: { Args: never; Returns: string[] }
       is_platform_admin: { Args: never; Returns: boolean }
+      is_tenant_member: { Args: { p_tenant_id: string }; Returns: boolean }
+      try_cast_uuid: { Args: { p_in: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
@@ -637,33 +699,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -672,23 +734,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -697,23 +759,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -722,36 +784,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -759,6 +821,7 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -799,6 +862,15 @@ export const Constants = {
 //   active: boolean (nullable, default: true)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+// Table: contract_attachments
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   contract_id: uuid (not null)
+//   file_name: text (not null)
+//   file_path: text (not null)
+//   file_size: integer (not null)
+//   content_type: text (not null)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: contracts
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -809,6 +881,8 @@ export const Constants = {
 //   status: text (not null, default: 'active'::text)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+//   value: numeric (nullable, default: 0)
+//   last_notified_at: timestamp with time zone (nullable)
 // Table: customers
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -891,6 +965,8 @@ export const Constants = {
 //   active_alerts: boolean (nullable, default: true)
 //   enabled_integrations: jsonb (nullable, default: '[]'::jsonb)
 //   branding: jsonb (nullable, default: '{"logo": "", "primary_color": "#000000"}'::jsonb)
+//   max_files_per_contract: integer (nullable, default: 5)
+//   max_file_size_mb: integer (nullable, default: 10)
 // Table: webhooks
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -913,6 +989,10 @@ export const Constants = {
 // Table: billing_rules
 //   PRIMARY KEY billing_rules_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY billing_rules_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: contract_attachments
+//   FOREIGN KEY contract_attachments_contract_id_fkey: FOREIGN KEY (contract_id) REFERENCES contracts(id) ON DELETE CASCADE
+//   PRIMARY KEY contract_attachments_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY contract_attachments_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 // Table: contracts
 //   PRIMARY KEY contracts_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY contracts_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
@@ -963,6 +1043,9 @@ export const Constants = {
 //     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: billing_rules
 //   Policy "Billing rules access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
+// Table: contract_attachments
+//   Policy "contract_attachments access" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: contracts
 //   Policy "Contracts access" (ALL, PERMISSIVE) roles={authenticated}
@@ -1027,7 +1110,7 @@ export const Constants = {
 //   AS $function$
 //     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid() AND role = 'admin';
 //   $function$
-//
+//   
 // FUNCTION get_auth_user_tenants()
 //   CREATE OR REPLACE FUNCTION public.get_auth_user_tenants()
 //    RETURNS SETOF uuid
@@ -1037,7 +1120,7 @@ export const Constants = {
 //   AS $function$
 //     SELECT tenant_id FROM tenant_users WHERE user_id = auth.uid();
 //   $function$
-//
+//   
 // FUNCTION handle_new_user()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user()
 //    RETURNS trigger
@@ -1049,30 +1132,30 @@ export const Constants = {
 //   BEGIN
 //     INSERT INTO public.profiles (id, email, full_name, phone)
 //     VALUES (
-//       NEW.id,
-//       NEW.email,
+//       NEW.id, 
+//       NEW.email, 
 //       NEW.raw_user_meta_data->>'full_name',
 //       NEW.raw_user_meta_data->>'phone'
 //     )
 //     ON CONFLICT (id) DO UPDATE SET
 //       full_name = EXCLUDED.full_name,
 //       phone = EXCLUDED.phone;
-//
+//   
 //     IF NEW.raw_user_meta_data->>'company_name' IS NOT NULL AND NEW.raw_user_meta_data->>'company_name' <> '' THEN
 //       new_tenant_id := gen_random_uuid();
-//
+//       
 //       INSERT INTO public.tenants (id, name, status, plan)
 //       VALUES (new_tenant_id, NEW.raw_user_meta_data->>'company_name', 'active', 'freemium');
-//
+//   
 //       INSERT INTO public.tenant_users (tenant_id, user_id, role, status)
 //       VALUES (new_tenant_id, NEW.id, 'admin', 'active')
 //       ON CONFLICT (tenant_id, user_id) DO NOTHING;
 //     END IF;
-//
+//   
 //     RETURN NEW;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION is_platform_admin()
 //   CREATE OR REPLACE FUNCTION public.is_platform_admin()
 //    RETURNS boolean
@@ -1089,7 +1172,22 @@ export const Constants = {
 //         AND t.name ILIKE 'Planettaweb%'
 //     );
 //   $function$
-//
+//   
+// FUNCTION is_tenant_member(uuid)
+//   CREATE OR REPLACE FUNCTION public.is_tenant_member(p_tenant_id uuid)
+//    RETURNS boolean
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     IF p_tenant_id IS NULL THEN RETURN false; END IF;
+//     RETURN EXISTS (
+//       SELECT 1 FROM public.tenant_users
+//       WHERE user_id = auth.uid() AND tenant_id = p_tenant_id
+//     );
+//   END;
+//   $function$
+//   
 // FUNCTION rls_auto_enable()
 //   CREATE OR REPLACE FUNCTION public.rls_auto_enable()
 //    RETURNS event_trigger
@@ -1120,7 +1218,19 @@ export const Constants = {
 //     END LOOP;
 //   END;
 //   $function$
-//
+//   
+// FUNCTION try_cast_uuid(text)
+//   CREATE OR REPLACE FUNCTION public.try_cast_uuid(p_in text)
+//    RETURNS uuid
+//    LANGUAGE plpgsql
+//   AS $function$
+//   BEGIN
+//     RETURN p_in::uuid;
+//   EXCEPTION WHEN OTHERS THEN
+//     RETURN NULL;
+//   END;
+//   $function$
+//   
 
 // --- INDEXES ---
 // Table: fiscal_monthly_stats
@@ -1129,3 +1239,4 @@ export const Constants = {
 //   CREATE UNIQUE INDEX roles_name_key ON public.roles USING btree (name)
 // Table: tenant_users
 //   CREATE UNIQUE INDEX tenant_users_tenant_id_user_id_key ON public.tenant_users USING btree (tenant_id, user_id)
+
