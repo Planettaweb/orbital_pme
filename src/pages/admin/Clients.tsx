@@ -338,7 +338,8 @@ export default function Clients() {
               </div>
               <CardDescription className="flex items-center gap-1.5 text-xs mt-1">
                 <CalendarDays className="w-3.5 h-3.5" />
-                Criado em: {new Date(tenant.created_at).toLocaleDateString()}
+                Criado em:{' '}
+                {new Date(tenant.created_at).toLocaleDateString('pt-BR')}
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-auto space-y-4">

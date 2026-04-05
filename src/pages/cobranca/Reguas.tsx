@@ -52,17 +52,18 @@ export default function Reguas() {
     setLoading(true)
 
     const payload = {
-      ...formData,
+      name: formData.name,
+      days_offset: parseInt(formData.days_offset.toString()),
+      channel: formData.channel,
+      template: formData.template,
       tenant_id: activeTenant,
-      days_offset: parseInt(formData.days_offset),
     }
-    if (!payload.id) delete (payload as any).id
 
-    const { error } = payload.id
+    const { error } = formData.id
       ? await supabase
           .from('billing_rules')
           .update(payload)
-          .eq('id', payload.id)
+          .eq('id', formData.id)
       : await supabase.from('billing_rules').insert([payload])
 
     if (error) toast.error('Erro ao salvar régua')
@@ -86,11 +87,17 @@ export default function Reguas() {
   }
 
   const openModal = (rule?: any) => {
-    setFormData(
-      rule
-        ? { ...rule, days_offset: rule.days_offset.toString() }
-        : defaultForm,
-    )
+    if (rule) {
+      setFormData({
+        id: rule.id,
+        name: rule.name,
+        days_offset: rule.days_offset.toString(),
+        channel: rule.channel,
+        template: rule.template || '',
+      })
+    } else {
+      setFormData(defaultForm)
+    }
     setIsModalOpen(true)
   }
 

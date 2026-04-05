@@ -7,7 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Loader2, Shield } from 'lucide-react'
+import { Loader2, Shield, Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 
 type Role = {
@@ -19,6 +20,7 @@ type Role = {
 export default function Roles() {
   const [roles, setRoles] = useState<Role[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     fetchRoles()
@@ -39,6 +41,13 @@ export default function Roles() {
       setLoading(false)
     }
   }
+
+  const filteredRoles = roles.filter(
+    (r) =>
+      r.name.toLowerCase().includes(search.toLowerCase()) ||
+      (r.description &&
+        r.description.toLowerCase().includes(search.toLowerCase())),
+  )
 
   return (
     <div className="space-y-6 animate-fade-in-up max-w-5xl mx-auto">
@@ -63,6 +72,16 @@ export default function Roles() {
             Estes são os perfis de segurança utilizados para restringir ou
             liberar funcionalidades para os usuários da organização.
           </CardDescription>
+          <div className="relative mt-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por perfil..."
+              className="pl-9 max-w-md bg-background"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -83,7 +102,7 @@ export default function Roles() {
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
-                  {roles.map((r) => (
+                  {filteredRoles.map((r) => (
                     <tr
                       key={r.id}
                       className="border-b transition-colors hover:bg-muted/50"
@@ -105,7 +124,7 @@ export default function Roles() {
                       </td>
                     </tr>
                   ))}
-                  {roles.length === 0 && (
+                  {filteredRoles.length === 0 && (
                     <tr>
                       <td
                         colSpan={2}

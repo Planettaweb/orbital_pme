@@ -4,7 +4,7 @@ import { useTenant } from '@/hooks/use-tenant'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { Key, Webhook, Copy, CheckCircle2 } from 'lucide-react'
+import { Key, Webhook, Copy, CheckCircle2, Trash2, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function Integracoes() {
@@ -12,6 +12,7 @@ export default function Integracoes() {
   const [keys, setKeys] = useState<any[]>([])
   const [webhooks, setWebhooks] = useState<any[]>([])
   const [activeTab, setActiveTab] = useState('api')
+  const [search, setSearch] = useState('')
 
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false)
   const [isWebhookModalOpen, setIsWebhookModalOpen] = useState(false)
@@ -84,6 +85,38 @@ export default function Integracoes() {
     toast.success('Copiado para a área de transferência!')
   }
 
+  const deleteApiKey = async (id: string) => {
+    if (
+      !window.confirm(
+        'Tem certeza que deseja revogar esta chave? Todas as integrações usando ela irão parar de funcionar imediatamente.',
+      )
+    )
+      return
+    const { error } = await supabase.from('api_keys').delete().eq('id', id)
+    if (error) toast.error('Erro ao revogar chave')
+    else {
+      toast.success('Chave revogada com sucesso')
+      fetchData()
+    }
+  }
+
+  const deleteWebhook = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este webhook?')) return
+    const { error } = await supabase.from('webhooks').delete().eq('id', id)
+    if (error) toast.error('Erro ao excluir webhook')
+    else {
+      toast.success('Webhook excluído com sucesso')
+      fetchData()
+    }
+  }
+
+  const filteredKeys = keys.filter((k) =>
+    k.name.toLowerCase().includes(search.toLowerCase()),
+  )
+  const filteredWebhooks = webhooks.filter((w) =>
+    w.url.toLowerCase().includes(search.toLowerCase()),
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -114,6 +147,23 @@ export default function Integracoes() {
         </button>
       </div>
 
+      <div className="bg-card border rounded-lg p-4 mb-4 flex items-center gap-4 shadow-sm bg-muted/20">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder={
+              activeTab === 'api'
+                ? 'Buscar por nome da chave...'
+                : 'Buscar por URL do webhook...'
+            }
+            className="pl-9 bg-background"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
       {activeTab === 'api' && (
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="flex justify-end">
@@ -135,20 +185,21 @@ export default function Integracoes() {
                   <th className="px-6 py-3">Prefixo</th>
                   <th className="px-6 py-3">Criada em</th>
                   <th className="px-6 py-3">Último Uso</th>
+                  <th className="px-6 py-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {keys.length === 0 ? (
+                {filteredKeys.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="px-6 py-12 text-center text-muted-foreground"
                     >
-                      Nenhuma chave de API gerada.
+                      Nenhuma chave de API encontrada.
                     </td>
                   </tr>
                 ) : (
-                  keys.map((k) => (
+                  filteredKeys.map((k) => (
                     <tr
                       key={k.id}
                       className="hover:bg-muted/50 transition-colors"
@@ -158,12 +209,21 @@ export default function Integracoes() {
                         {k.key_prefix}...
                       </td>
                       <td className="px-6 py-4">
-                        {new Date(k.created_at).toLocaleDateString()}
+                        {new Date(k.created_at).toLocaleDateString('pt-BR')}
                       </td>
                       <td className="px-6 py-4">
                         {k.last_used_at
-                          ? new Date(k.last_used_at).toLocaleDateString()
+                          ? new Date(k.last_used_at).toLocaleDateString('pt-BR')
                           : 'Nunca'}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteApiKey(k.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -188,20 +248,21 @@ export default function Integracoes() {
                   <th className="px-6 py-3">URL do Endpoint</th>
                   <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Eventos</th>
+                  <th className="px-6 py-3 text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {webhooks.length === 0 ? (
+                {filteredWebhooks.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={3}
+                      colSpan={4}
                       className="px-6 py-12 text-center text-muted-foreground"
                     >
-                      Nenhum webhook configurado.
+                      Nenhum webhook encontrado.
                     </td>
                   </tr>
                 ) : (
-                  webhooks.map((w) => (
+                  filteredWebhooks.map((w) => (
                     <tr
                       key={w.id}
                       className="hover:bg-muted/50 transition-colors"
@@ -218,6 +279,15 @@ export default function Integracoes() {
                       </td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">
                         {w.events?.length || 0} eventos inscritos
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => deleteWebhook(w.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
                       </td>
                     </tr>
                   ))

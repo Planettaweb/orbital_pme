@@ -50,11 +50,17 @@ export default function Clientes() {
     if (!activeTenant) return
     setLoading(true)
 
-    const payload = { ...formData, tenant_id: activeTenant }
-    if (!payload.id) delete (payload as any).id
+    const payload = {
+      name: formData.name,
+      document: formData.document,
+      email: formData.email,
+      phone: formData.phone,
+      risk_level: formData.risk_level,
+      tenant_id: activeTenant,
+    }
 
-    const { error } = payload.id
-      ? await supabase.from('customers').update(payload).eq('id', payload.id)
+    const { error } = formData.id
+      ? await supabase.from('customers').update(payload).eq('id', formData.id)
       : await supabase.from('customers').insert([payload])
 
     if (error) {
@@ -79,7 +85,18 @@ export default function Clientes() {
   }
 
   const openModal = (customer?: any) => {
-    setFormData(customer || defaultForm)
+    if (customer) {
+      setFormData({
+        id: customer.id,
+        name: customer.name || '',
+        document: customer.document || '',
+        email: customer.email || '',
+        phone: customer.phone || '',
+        risk_level: customer.risk_level || 'low',
+      })
+    } else {
+      setFormData(defaultForm)
+    }
     setIsModalOpen(true)
   }
 

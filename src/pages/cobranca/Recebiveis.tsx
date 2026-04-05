@@ -77,14 +77,15 @@ export default function Recebiveis() {
     setLoading(true)
 
     const payload = {
-      ...formData,
+      customer_id: formData.customer_id,
+      amount: parseFloat(formData.amount.toString()),
+      due_date: formData.due_date,
+      status: formData.status,
       tenant_id: activeTenant,
-      amount: parseFloat(formData.amount),
     }
-    if (!payload.id) delete (payload as any).id
 
-    const { error } = payload.id
-      ? await supabase.from('receivables').update(payload).eq('id', payload.id)
+    const { error } = formData.id
+      ? await supabase.from('receivables').update(payload).eq('id', formData.id)
       : await supabase.from('receivables').insert([payload])
 
     if (error) toast.error('Erro ao salvar título')
@@ -136,7 +137,17 @@ export default function Recebiveis() {
   }
 
   const openModal = (receivable?: any) => {
-    setFormData(receivable || defaultForm)
+    if (receivable) {
+      setFormData({
+        id: receivable.id,
+        customer_id: receivable.customer_id,
+        amount: receivable.amount.toString(),
+        due_date: receivable.due_date,
+        status: receivable.status,
+      })
+    } else {
+      setFormData(defaultForm)
+    }
     setIsModalOpen(true)
   }
 
@@ -350,6 +361,7 @@ export default function Recebiveis() {
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
+                    locale={ptBR}
                     selected={
                       formData.due_date
                         ? new Date(formData.due_date + 'T12:00:00')
@@ -443,6 +455,7 @@ export default function Recebiveis() {
               <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
+                  locale={ptBR}
                   selected={
                     promiseData.promise_date
                       ? new Date(promiseData.promise_date + 'T12:00:00')
