@@ -15,6 +15,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'api_keys_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      billing_actions: {
+        Row: {
+          channel: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          promise_date: string | null
+          receivable_id: string
+          status: string
+          tenant_id: string
+          type: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          promise_date?: string | null
+          receivable_id: string
+          status?: string
+          tenant_id: string
+          type: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          promise_date?: string | null
+          receivable_id?: string
+          status?: string
+          tenant_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'billing_actions_receivable_id_fkey'
+            columns: ['receivable_id']
+            isOneToOne: false
+            referencedRelation: 'receivables'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'billing_actions_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      billing_rules: {
+        Row: {
+          active: boolean | null
+          channel: string
+          created_at: string
+          days_offset: number
+          id: string
+          name: string
+          template: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          channel: string
+          created_at?: string
+          days_offset: number
+          id?: string
+          name: string
+          template?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          channel?: string
+          created_at?: string
+          days_offset?: number
+          id?: string
+          name?: string
+          template?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'billing_rules_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       contracts: {
         Row: {
           created_at: string
@@ -66,7 +202,9 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          payment_behavior: string | null
           phone: string | null
+          risk_level: string | null
           tenant_id: string
           updated_at: string
         }
@@ -76,7 +214,9 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          payment_behavior?: string | null
           phone?: string | null
+          risk_level?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -86,7 +226,9 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          payment_behavior?: string | null
           phone?: string | null
+          risk_level?: string | null
           tenant_id?: string
           updated_at?: string
         }
@@ -325,6 +467,47 @@ export type Database = {
         }
         Relationships: []
       }
+      webhooks: {
+        Row: {
+          active: boolean | null
+          created_at: string
+          events: Json
+          id: string
+          secret: string
+          tenant_id: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string
+          events?: Json
+          id?: string
+          secret: string
+          tenant_id: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string
+          events?: Json
+          id?: string
+          secret?: string
+          tenant_id?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'webhooks_tenant_id_fkey'
+            columns: ['tenant_id']
+            isOneToOne: false
+            referencedRelation: 'tenants'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -476,6 +659,35 @@ export const Constants = {
 // --- COLUMN TYPES (actual PostgreSQL types) ---
 // Use this to know the real database type when writing migrations.
 // "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: api_keys
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   name: text (not null)
+//   key_prefix: text (not null)
+//   key_hash: text (not null)
+//   created_at: timestamp with time zone (not null, default: now())
+//   last_used_at: timestamp with time zone (nullable)
+// Table: billing_actions
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   receivable_id: uuid (not null)
+//   type: text (not null)
+//   channel: text (nullable)
+//   status: text (not null, default: 'pending'::text)
+//   notes: text (nullable)
+//   promise_date: date (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
+//   created_by: uuid (nullable)
+// Table: billing_rules
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   name: text (not null)
+//   days_offset: integer (not null)
+//   channel: text (not null)
+//   template: text (nullable)
+//   active: boolean (nullable, default: true)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
 // Table: contracts
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -495,6 +707,8 @@ export const Constants = {
 //   phone: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
 //   updated_at: timestamp with time zone (not null, default: now())
+//   risk_level: text (nullable, default: 'low'::text)
+//   payment_behavior: text (nullable, default: 'punctual'::text)
 // Table: fiscal_documents
 //   id: uuid (not null, default: gen_random_uuid())
 //   tenant_id: uuid (not null)
@@ -543,8 +757,28 @@ export const Constants = {
 //   active_alerts: boolean (nullable, default: true)
 //   enabled_integrations: jsonb (nullable, default: '[]'::jsonb)
 //   branding: jsonb (nullable, default: '{"logo": "", "primary_color": "#000000"}'::jsonb)
+// Table: webhooks
+//   id: uuid (not null, default: gen_random_uuid())
+//   tenant_id: uuid (not null)
+//   url: text (not null)
+//   events: jsonb (not null, default: '[]'::jsonb)
+//   active: boolean (nullable, default: true)
+//   secret: text (not null)
+//   created_at: timestamp with time zone (not null, default: now())
+//   updated_at: timestamp with time zone (not null, default: now())
 
 // --- CONSTRAINTS ---
+// Table: api_keys
+//   PRIMARY KEY api_keys_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY api_keys_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: billing_actions
+//   FOREIGN KEY billing_actions_created_by_fkey: FOREIGN KEY (created_by) REFERENCES auth.users(id) ON DELETE SET NULL
+//   PRIMARY KEY billing_actions_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY billing_actions_receivable_id_fkey: FOREIGN KEY (receivable_id) REFERENCES receivables(id) ON DELETE CASCADE
+//   FOREIGN KEY billing_actions_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+// Table: billing_rules
+//   PRIMARY KEY billing_rules_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY billing_rules_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 // Table: contracts
 //   PRIMARY KEY contracts_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY contracts_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
@@ -572,8 +806,20 @@ export const Constants = {
 //   FOREIGN KEY tenant_users_user_id_fkey: FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE
 // Table: tenants
 //   PRIMARY KEY tenants_pkey: PRIMARY KEY (id)
+// Table: webhooks
+//   PRIMARY KEY webhooks_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY webhooks_tenant_id_fkey: FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
 
 // --- ROW LEVEL SECURITY POLICIES ---
+// Table: api_keys
+//   Policy "API keys access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
+// Table: billing_actions
+//   Policy "Billing actions access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
+// Table: billing_rules
+//   Policy "Billing rules access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 // Table: contracts
 //   Policy "Contracts access" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
@@ -614,6 +860,9 @@ export const Constants = {
 //     WITH CHECK: is_platform_admin()
 //   Policy "Tenant update" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: ((id IN ( SELECT get_auth_user_admin_tenants() AS get_auth_user_admin_tenants)) OR is_platform_admin())
+// Table: webhooks
+//   Policy "Webhooks access" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (tenant_id IN ( SELECT get_auth_user_tenants() AS get_auth_user_tenants))
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION get_auth_user_admin_tenants()

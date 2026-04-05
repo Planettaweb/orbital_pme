@@ -4,8 +4,23 @@ import { useTenant } from '@/hooks/use-tenant'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { Plus, Upload, Calendar, Handshake, AlertCircle } from 'lucide-react'
+import {
+  Plus,
+  Upload,
+  Calendar as CalendarIcon,
+  Handshake,
+  AlertCircle,
+} from 'lucide-react'
 import { toast } from 'sonner'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Calendar } from '@/components/ui/calendar'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 
 export default function Recebiveis() {
   const { activeTenant } = useTenant()
@@ -54,15 +69,13 @@ export default function Recebiveis() {
     e.preventDefault()
     if (!activeTenant) return
     setLoading(true)
-    const { error } = await supabase
-      .from('receivables')
-      .insert([
-        {
-          ...formData,
-          tenant_id: activeTenant,
-          amount: parseFloat(formData.amount),
-        },
-      ])
+    const { error } = await supabase.from('receivables').insert([
+      {
+        ...formData,
+        tenant_id: activeTenant,
+        amount: parseFloat(formData.amount),
+      },
+    ])
     if (error) toast.error('Erro ao salvar título')
     else {
       toast.success('Título cadastrado!')
@@ -178,8 +191,10 @@ export default function Recebiveis() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        {new Date(r.due_date).toLocaleDateString('pt-BR')}
+                        <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                        {new Date(r.due_date + 'T12:00:00').toLocaleDateString(
+                          'pt-BR',
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -250,15 +265,53 @@ export default function Recebiveis() {
                 placeholder="0.00"
               />
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col justify-end">
               <label className="text-sm font-medium">Vencimento</label>
-              <Input
-                type="date"
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !formData.due_date && 'text-muted-foreground',
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.due_date ? (
+                      format(
+                        new Date(formData.due_date + 'T12:00:00'),
+                        'dd/MM/yyyy',
+                        { locale: ptBR },
+                      )
+                    ) : (
+                      <span>Selecione uma data</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={
+                      formData.due_date
+                        ? new Date(formData.due_date + 'T12:00:00')
+                        : undefined
+                    }
+                    onSelect={(date) =>
+                      setFormData({
+                        ...formData,
+                        due_date: date ? format(date, 'yyyy-MM-dd') : '',
+                      })
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <input
+                type="hidden"
                 required
                 value={formData.due_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, due_date: e.target.value })
-                }
+                name="due_date"
               />
             </div>
           </div>
@@ -290,15 +343,53 @@ export default function Recebiveis() {
               para este título.
             </p>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 flex flex-col">
             <label className="text-sm font-medium">Data Prometida</label>
-            <Input
-              type="date"
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    'w-full justify-start text-left font-normal',
+                    !promiseData.promise_date && 'text-muted-foreground',
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {promiseData.promise_date ? (
+                    format(
+                      new Date(promiseData.promise_date + 'T12:00:00'),
+                      'dd/MM/yyyy',
+                      { locale: ptBR },
+                    )
+                  ) : (
+                    <span>Selecione uma data</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={
+                    promiseData.promise_date
+                      ? new Date(promiseData.promise_date + 'T12:00:00')
+                      : undefined
+                  }
+                  onSelect={(date) => {
+                    setPromiseData({
+                      ...promiseData,
+                      promise_date: date ? format(date, 'yyyy-MM-dd') : '',
+                    })
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <input
+              type="hidden"
               required
               value={promiseData.promise_date}
-              onChange={(e) =>
-                setPromiseData({ ...promiseData, promise_date: e.target.value })
-              }
+              name="promise_date"
             />
           </div>
           <div className="space-y-2">
