@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useToast } from '@/components/ui/use-toast'
 import {
   Search,
   Plus,
@@ -9,8 +10,10 @@ import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Trash2,
 } from 'lucide-react'
 import { format } from 'date-fns'
+import { useCsvImport } from '@/hooks/use-csv-import'
 
 interface FiscalDocument {
   id: string
@@ -24,10 +27,7 @@ export default function DocumentosFiscais() {
   const [documents, setDocuments] = useState<FiscalDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-
-  useEffect(() => {
-    fetchDocuments()
-  }, [])
+  const { toast } = useToast()
 
   const fetchDocuments = async () => {
     try {
@@ -35,13 +35,49 @@ export default function DocumentosFiscais() {
         .from('fiscal_documents')
         .select('*')
         .order('issue_date', { ascending: false })
-
       if (error) throw error
       setDocuments(data || [])
     } catch (error) {
-      console.error('Error fetching documents:', error)
+      console.error(error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDocuments()
+  }, [])
+
+  const { fileInputRef, handleFileUpload, triggerImport } = useCsvImport(
+    'fiscal_documents',
+    (values, tenantId) => {
+      if (!values[0]) return null
+      return {
+        tenant_id: tenantId,
+        document_number: values[0]?.trim(),
+        issue_date: values[1]?.trim() || new Date().toISOString().split('T')[0],
+        status: values[2]?.trim() || 'valid',
+        risk_level: values[3]?.trim() || 'low',
+      }
+    },
+    fetchDocuments,
+  )
+
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('fiscal_documents')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      toast({ title: 'Sucesso', description: 'Documento excluído.' })
+      fetchDocuments()
+    } catch (error: any) {
+      toast({
+        title: 'Erro',
+        description: error.message,
+        variant: 'destructive',
+      })
     }
   }
 
@@ -57,13 +93,22 @@ export default function DocumentosFiscais() {
             Documentos Fiscais
           </h1>
           <p className="text-muted-foreground">
-            Monitore suas notas fiscais e evite inconsistências com a Receita
-            Federal.
+            Monitore notas fiscais e importe arquivos CSV.
           </p>
         </div>
-        <Button className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white">
+        <input
+          type="file"
+          accept=".csv"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+        />
+        <Button
+          className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white"
+          onClick={triggerImport}
+        >
           <Plus className="w-4 h-4 mr-2" />
-          Importar XML
+          Importar CSV
         </Button>
       </div>
 
@@ -72,22 +117,21 @@ export default function DocumentosFiscais() {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar por número da nota..."
+              placeholder="Buscar por número..."
               className="pl-9 bg-background"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/20">
               <tr>
                 <th className="px-6 py-4 font-medium">Documento</th>
-                <th className="px-6 py-4 font-medium">Data de Emissão</th>
-                <th className="px-6 py-4 font-medium">Status da Nota</th>
-                <th className="px-6 py-4 font-medium">Nível de Risco</th>
+                <th className="px-6 py-4 font-medium">Emissão</th>
+                <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium">Risco</th>
                 <th className="px-6 py-4 text-right font-medium">Ações</th>
               </tr>
             </thead>
@@ -98,7 +142,7 @@ export default function DocumentosFiscais() {
                     colSpan={5}
                     className="px-6 py-8 text-center text-muted-foreground"
                   >
-                    Carregando documentos...
+                    Carregando...
                   </td>
                 </tr>
               ) : filteredDocs.length === 0 ? (
@@ -163,9 +207,10 @@ export default function DocumentosFiscais() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-telemetry-blue hover:text-telemetry-blue hover:bg-telemetry-blue/10"
+                        onClick={() => handleDelete(doc.id)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
-                        Detalhes
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </td>
                   </tr>

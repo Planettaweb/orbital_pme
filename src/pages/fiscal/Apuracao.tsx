@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
 import {
   Calculator,
   Calendar,
@@ -5,48 +7,63 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { format } from 'date-fns'
+import { useToast } from '@/components/ui/use-toast'
+import { useCsvImport } from '@/hooks/use-csv-import'
 
 export default function ApuracaoFiscal() {
-  const taxes = [
-    {
-      id: 1,
-      name: 'Simples Nacional (DAS)',
-      amount: 4530.2,
-      dueDate: '2026-04-20',
-      status: 'pending',
+  const [taxes, setTaxes] = useState<any[]>([])
+  const { toast } = useToast()
+
+  const fetchTaxes = async () => {
+    const { data } = await supabase
+      .from('fiscal_taxes')
+      .select('*')
+      .order('due_date', { ascending: true })
+    if (data) setTaxes(data)
+  }
+
+  useEffect(() => {
+    fetchTaxes()
+  }, [])
+
+  const { fileInputRef, handleFileUpload, triggerImport } = useCsvImport(
+    'fiscal_taxes',
+    (values, tenantId) => {
+      if (!values[0] || !values[2]) return null
+      return {
+        tenant_id: tenantId,
+        name: values[0]?.trim(),
+        amount: parseFloat(values[1]?.trim() || '0'),
+        due_date: values[2]?.trim(),
+        status: values[3]?.trim() || 'pending',
+      }
     },
-    {
-      id: 2,
-      name: 'INSS (Folha)',
-      amount: 2150.0,
-      dueDate: '2026-04-15',
-      status: 'paid',
-    },
-    {
-      id: 3,
-      name: 'FGTS',
-      amount: 890.5,
-      dueDate: '2026-04-07',
-      status: 'pending',
-    },
-    {
-      id: 4,
-      name: 'ISSQN (Retido)',
-      amount: 1240.0,
-      dueDate: '2026-03-30',
-      status: 'late',
-    },
-  ]
+    fetchTaxes,
+  )
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from('fiscal_taxes').delete().eq('id', id)
+    if (!error) {
+      toast({ title: 'Sucesso', description: 'Imposto excluído.' })
+      fetchTaxes()
+    }
+  }
 
   const totalPending = taxes
     .filter((t) => t.status !== 'paid')
-    .reduce((acc, t) => acc + t.amount, 0)
+    .reduce((acc, t) => acc + Number(t.amount), 0)
   const totalPaid = taxes
     .filter((t) => t.status === 'paid')
-    .reduce((acc, t) => acc + t.amount, 0)
+    .reduce((acc, t) => acc + Number(t.amount), 0)
+  const nextTax = taxes
+    .filter((t) => t.status !== 'paid')
+    .sort(
+      (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+    )[0]
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -56,13 +73,22 @@ export default function ApuracaoFiscal() {
             Apuração de Impostos
           </h1>
           <p className="text-muted-foreground">
-            Gerencie o pagamento de tributos e evite multas ou bloqueios de
-            certidões.
+            Gerencie tributos e importe dados via CSV.
           </p>
         </div>
-        <Button className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white">
+        <input
+          type="file"
+          accept=".csv"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+        />
+        <Button
+          className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white"
+          onClick={triggerImport}
+        >
           <Calculator className="w-4 h-4 mr-2" />
-          Nova Apuração
+          Importar Impostos (CSV)
         </Button>
       </div>
 
@@ -79,7 +105,7 @@ export default function ApuracaoFiscal() {
         </div>
         <div className="bg-card border rounded-xl p-6 shadow-sm flex flex-col justify-between h-32">
           <div className="flex items-center justify-between text-muted-foreground">
-            <span className="text-sm font-medium">Impostos Pagos (Mês)</span>
+            <span className="text-sm font-medium">Impostos Pagos</span>
             <CheckCircle2 className="w-4 h-4 text-green-500" />
           </div>
           <div className="text-2xl font-bold">
@@ -95,15 +121,19 @@ export default function ApuracaoFiscal() {
             <Calendar className="w-4 h-4 text-white/80" />
           </div>
           <div>
-            <div className="text-lg font-bold truncate">FGTS</div>
-            <div className="text-sm text-white/80">07 de Abril, 2026</div>
+            <div className="text-lg font-bold truncate">
+              {nextTax?.name || 'Nenhum pendente'}
+            </div>
+            <div className="text-sm text-white/80">
+              {nextTax ? format(new Date(nextTax.due_date), 'dd/MM/yyyy') : '-'}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
         <div className="p-4 border-b bg-muted/20">
-          <h3 className="font-semibold">Guias e Tributos - Abril/2026</h3>
+          <h3 className="font-semibold">Guias e Tributos</h3>
         </div>
         <div className="divide-y">
           {taxes.map((tax) => (
@@ -113,13 +143,7 @@ export default function ApuracaoFiscal() {
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    tax.status === 'paid'
-                      ? 'bg-green-100 text-green-600 dark:bg-green-900/30'
-                      : tax.status === 'late'
-                        ? 'bg-red-100 text-red-600 dark:bg-red-900/30'
-                        : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30'
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${tax.status === 'paid' ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : tax.status === 'late' ? 'bg-red-100 text-red-600 dark:bg-red-900/30' : 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30'}`}
                 >
                   {tax.status === 'paid' ? (
                     <CheckCircle2 className="w-5 h-5" />
@@ -132,16 +156,16 @@ export default function ApuracaoFiscal() {
                 <div>
                   <h4 className="font-semibold">{tax.name}</h4>
                   <p className="text-sm text-muted-foreground">
-                    Vencimento: {format(new Date(tax.dueDate), 'dd/MM/yyyy')}
+                    Vencimento: {format(new Date(tax.due_date), 'dd/MM/yyyy')}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between w-full sm:w-auto gap-8">
-                <div className="text-right">
+              <div className="flex items-center justify-between w-full sm:w-auto gap-4">
+                <div className="text-right mr-4">
                   <div className="font-bold">
                     R${' '}
-                    {tax.amount.toLocaleString('pt-BR', {
+                    {Number(tax.amount).toLocaleString('pt-BR', {
                       minimumFractionDigits: 2,
                     })}
                   </div>
@@ -150,9 +174,7 @@ export default function ApuracaoFiscal() {
                       <span className="text-green-600">Pago</span>
                     )}
                     {tax.status === 'pending' && (
-                      <span className="text-yellow-600">
-                        Aguardando Pagamento
-                      </span>
+                      <span className="text-yellow-600">Pendente</span>
                     )}
                     {tax.status === 'late' && (
                       <span className="text-red-600 font-medium">
@@ -161,18 +183,33 @@ export default function ApuracaoFiscal() {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0"
-                  disabled={tax.status === 'paid'}
-                >
-                  {tax.status === 'paid' ? 'Comprovante' : 'Gerar Guia'}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    disabled={tax.status === 'paid'}
+                  >
+                    {tax.status === 'paid' ? 'Comprovante' : 'Gerar Guia'}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(tax.id)}
+                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
+          {taxes.length === 0 && (
+            <div className="p-8 text-center text-muted-foreground">
+              Nenhum imposto cadastrado.
+            </div>
+          )}
         </div>
       </div>
     </div>

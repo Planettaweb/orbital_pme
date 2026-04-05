@@ -1,50 +1,63 @@
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
 import {
   Shield,
   AlertCircle,
   RefreshCw,
   ExternalLink,
   ShieldAlert,
+  Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
+import { useCsvImport } from '@/hooks/use-csv-import'
+import { format } from 'date-fns'
 
 export default function CertidoesFiscais() {
-  const certificates = [
-    {
-      id: 1,
-      name: 'Certidão Negativa Federal (Receita/PGFN)',
-      status: 'valid',
-      expiresAt: '2026-09-15',
-      source: 'Receita Federal',
+  const [certificates, setCertificates] = useState<any[]>([])
+  const { toast } = useToast()
+
+  const fetchCerts = async () => {
+    const { data } = await supabase
+      .from('fiscal_certificates')
+      .select('*')
+      .order('expires_at', { ascending: true })
+    if (data) setCertificates(data)
+  }
+
+  useEffect(() => {
+    fetchCerts()
+  }, [])
+
+  const { fileInputRef, handleFileUpload, triggerImport } = useCsvImport(
+    'fiscal_certificates',
+    (values, tenantId) => {
+      if (!values[0] || !values[2]) return null
+      return {
+        tenant_id: tenantId,
+        name: values[0]?.trim(),
+        status: values[1]?.trim() || 'valid',
+        expires_at: values[2]?.trim(),
+        source: values[3]?.trim() || '-',
+      }
     },
-    {
-      id: 2,
-      name: 'Certidão Negativa Estadual (Sefaz)',
-      status: 'warning',
-      expiresAt: '2026-04-10',
-      source: 'Sefaz SP',
-    },
-    {
-      id: 3,
-      name: 'Certidão Negativa Municipal',
-      status: 'expired',
-      expiresAt: '2026-03-31',
-      source: 'Prefeitura',
-    },
-    {
-      id: 4,
-      name: 'Certidão de Regularidade do FGTS (CRF)',
-      status: 'valid',
-      expiresAt: '2026-08-20',
-      source: 'Caixa Econômica',
-    },
-    {
-      id: 5,
-      name: 'Certidão Negativa Trabalhista (CNDT)',
-      status: 'valid',
-      expiresAt: '2026-07-11',
-      source: 'TST',
-    },
-  ]
+    fetchCerts,
+  )
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase
+      .from('fiscal_certificates')
+      .delete()
+      .eq('id', id)
+    if (!error) {
+      toast({ title: 'Sucesso', description: 'Certidão excluída.' })
+      fetchCerts()
+    }
+  }
+
+  const validCount = certificates.filter((c) => c.status === 'valid').length
+  const warningCount = certificates.filter((c) => c.status === 'warning').length
+  const expiredCount = certificates.filter((c) => c.status === 'expired').length
 
   return (
     <div className="space-y-6 animate-fade-in-up">
@@ -52,12 +65,21 @@ export default function CertidoesFiscais() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Certidões (CND)</h1>
           <p className="text-muted-foreground">
-            Monitoramento automatizado da regularidade fiscal da sua empresa.
+            Monitoramento automatizado da regularidade fiscal.
           </p>
         </div>
-        <Button className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Atualizar Todas
+        <input
+          type="file"
+          accept=".csv"
+          className="hidden"
+          ref={fileInputRef}
+          onChange={handleFileUpload}
+        />
+        <Button
+          className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white"
+          onClick={triggerImport}
+        >
+          <RefreshCw className="w-4 h-4 mr-2" /> Importar CSV
         </Button>
       </div>
 
@@ -67,7 +89,7 @@ export default function CertidoesFiscais() {
             <div className="p-2 bg-green-100 text-green-600 dark:bg-green-900/30 rounded-lg">
               <Shield className="w-5 h-5" />
             </div>
-            <div className="font-semibold text-xl">3</div>
+            <div className="font-semibold text-xl">{validCount}</div>
           </div>
           <div className="text-sm text-muted-foreground">Certidões Válidas</div>
         </div>
@@ -76,7 +98,7 @@ export default function CertidoesFiscais() {
             <div className="p-2 bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 rounded-lg">
               <AlertCircle className="w-5 h-5" />
             </div>
-            <div className="font-semibold text-xl">1</div>
+            <div className="font-semibold text-xl">{warningCount}</div>
           </div>
           <div className="text-sm text-muted-foreground">
             Perto do Vencimento
@@ -87,7 +109,7 @@ export default function CertidoesFiscais() {
             <div className="p-2 bg-red-100 text-red-600 dark:bg-red-900/30 rounded-lg">
               <ShieldAlert className="w-5 h-5" />
             </div>
-            <div className="font-semibold text-xl">1</div>
+            <div className="font-semibold text-xl">{expiredCount}</div>
           </div>
           <div className="text-sm text-muted-foreground">
             Certidões Vencidas
@@ -110,16 +132,9 @@ export default function CertidoesFiscais() {
             className="bg-card border rounded-xl p-5 shadow-sm hover:border-telemetry-blue/50 transition-colors group relative overflow-hidden"
           >
             <div
-              className={`absolute top-0 left-0 w-1 h-full ${
-                cert.status === 'valid'
-                  ? 'bg-green-500'
-                  : cert.status === 'warning'
-                    ? 'bg-yellow-500'
-                    : 'bg-red-500'
-              }`}
+              className={`absolute top-0 left-0 w-1 h-full ${cert.status === 'valid' ? 'bg-green-500' : cert.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}`}
             />
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2 pl-2">
               <div>
                 <h3 className="font-semibold leading-tight mb-1">
                   {cert.name}
@@ -128,30 +143,39 @@ export default function CertidoesFiscais() {
                   {cert.source}
                 </span>
               </div>
-              {cert.status === 'valid' && (
-                <span className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
-                  Regular
-                </span>
-              )}
-              {cert.status === 'warning' && (
-                <span className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
-                  Vence em Breve
-                </span>
-              )}
-              {cert.status === 'expired' && (
-                <span className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
-                  Irregular / Vencida
-                </span>
-              )}
+              <div className="flex items-center gap-2">
+                {cert.status === 'valid' && (
+                  <span className="bg-green-100 text-green-700 text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
+                    Regular
+                  </span>
+                )}
+                {cert.status === 'warning' && (
+                  <span className="bg-yellow-100 text-yellow-700 text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
+                    Vence em Breve
+                  </span>
+                )}
+                {cert.status === 'expired' && (
+                  <span className="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-medium whitespace-nowrap">
+                    Vencida
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(cert.id)}
+                  className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
-
-            <div className="flex items-center justify-between text-sm mt-6">
+            <div className="flex items-center justify-between text-sm mt-6 pl-2">
               <div className="text-muted-foreground">
                 Vencimento:{' '}
                 <span
                   className={`font-medium ${cert.status === 'expired' ? 'text-red-500' : 'text-foreground'}`}
                 >
-                  {cert.expiresAt.split('-').reverse().join('/')}
+                  {format(new Date(cert.expires_at), 'dd/MM/yyyy')}
                 </span>
               </div>
               <Button
@@ -159,7 +183,7 @@ export default function CertidoesFiscais() {
                 size="sm"
                 className="h-8 text-telemetry-blue hover:text-telemetry-blue group-hover:bg-telemetry-blue/10"
               >
-                Ver Certidão <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
+                Ver <ExternalLink className="w-3.5 h-3.5 ml-1.5" />
               </Button>
             </div>
           </div>
