@@ -35,6 +35,8 @@ import {
   Activity,
   Users,
   Database,
+  Search,
+  Trash2,
 } from 'lucide-react'
 
 type Tenant = {
@@ -193,6 +195,7 @@ function TenantForm({
 export default function Clients() {
   const [loading, setLoading] = useState(true)
   const [tenants, setTenants] = useState<Tenant[]>([])
+  const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null)
 
@@ -224,6 +227,27 @@ export default function Clients() {
     setEditingTenant(tenant)
     setIsModalOpen(true)
   }
+
+  const handleDelete = async (id: string) => {
+    if (
+      !window.confirm(
+        'Tem certeza que deseja excluir este cliente? Todos os dados vinculados serão permanentemente apagados.',
+      )
+    )
+      return
+    try {
+      const { error } = await supabase.from('tenants').delete().eq('id', id)
+      if (error) throw error
+      toast.success('Cliente excluído com sucesso!')
+      fetchTenants()
+    } catch (error: any) {
+      toast.error('Erro ao excluir cliente: ' + error.message)
+    }
+  }
+
+  const filtered = tenants.filter((t) =>
+    t.name.toLowerCase().includes(search.toLowerCase()),
+  )
 
   if (loading)
     return (
@@ -270,9 +294,30 @@ export default function Clients() {
         </Dialog>
       </div>
 
+      <div className="bg-card border rounded-lg p-4 mb-4 flex items-center gap-4 shadow-sm bg-muted/20">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar por nome da empresa..."
+            className="pl-9 bg-background"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {tenants.map((tenant) => (
-          <Card key={tenant.id} className="flex flex-col">
+        {filtered.map((tenant) => (
+          <Card key={tenant.id} className="flex flex-col relative group">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+              onClick={() => handleDelete(tenant.id)}
+            >
+              <Trash2 className="w-4 h-4 text-red-500" />
+            </Button>
             <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
                 <CardTitle className="text-lg line-clamp-1" title={tenant.name}>
@@ -339,9 +384,9 @@ export default function Clients() {
             </CardContent>
           </Card>
         ))}
-        {tenants.length === 0 && (
+        {filtered.length === 0 && (
           <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed rounded-lg">
-            Nenhum cliente cadastrado ainda.
+            Nenhum cliente encontrado.
           </div>
         )}
       </div>

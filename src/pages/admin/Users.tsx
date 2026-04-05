@@ -8,8 +8,9 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Loader2, UserCheck, UserX } from 'lucide-react'
+import { Loader2, UserCheck, UserX, Search, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const Badge = ({
@@ -43,6 +44,7 @@ type TenantUser = {
 
 export default function Users() {
   const [users, setUsers] = useState<TenantUser[]>([])
+  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -107,6 +109,32 @@ export default function Users() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (
+      !window.confirm(
+        'Tem certeza que deseja remover este usuário da organização?',
+      )
+    )
+      return
+    try {
+      const { error } = await supabase
+        .from('tenant_users')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      toast.success('Usuário removido com sucesso.')
+      setUsers(users.filter((u) => u.id !== id))
+    } catch (error: any) {
+      toast.error('Erro ao remover usuário.')
+    }
+  }
+
+  const filtered = users.filter(
+    (u) =>
+      u.profiles?.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+      u.profiles?.email.toLowerCase().includes(search.toLowerCase()),
+  )
+
   return (
     <div className="space-y-6 animate-fade-in-up max-w-5xl mx-auto">
       <div className="flex justify-between items-center">
@@ -126,6 +154,16 @@ export default function Users() {
           <CardDescription>
             Lista de todos os usuários vinculados ao seu tenant.
           </CardDescription>
+          <div className="relative mt-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por nome ou e-mail..."
+              className="pl-9 max-w-md bg-background"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -152,7 +190,7 @@ export default function Users() {
                   </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
-                  {users.map((u) => (
+                  {filtered.map((u) => (
                     <tr
                       key={u.id}
                       className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
@@ -191,7 +229,7 @@ export default function Users() {
                           <option value="viewer">Visualizador</option>
                         </select>
                       </td>
-                      <td className="p-4 align-middle text-right space-x-2">
+                      <td className="p-4 align-middle text-right space-x-2 whitespace-nowrap">
                         {u.status === 'pending' || u.status === 'blocked' ? (
                           <Button
                             size="sm"
@@ -206,23 +244,31 @@ export default function Users() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                            className="text-amber-600 border-amber-200 hover:bg-amber-50 hover:text-amber-700"
                             onClick={() => updateStatus(u.id, 'blocked')}
                           >
                             <UserX className="w-4 h-4 mr-2" />
                             Bloquear
                           </Button>
                         )}
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDelete(u.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
-                  {users.length === 0 && (
+                  {filtered.length === 0 && (
                     <tr>
                       <td
                         colSpan={4}
                         className="p-8 text-center text-muted-foreground"
                       >
-                        Nenhum usuário encontrado na organização.
+                        Nenhum usuário encontrado na busca.
                       </td>
                     </tr>
                   )}

@@ -10,21 +10,26 @@ import {
   ShieldAlert,
   ShieldCheck,
   AlertTriangle,
+  Edit2,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function Clientes() {
   const { activeTenant } = useTenant()
   const [customers, setCustomers] = useState<any[]>([])
+  const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
+  const defaultForm = {
+    id: '',
     name: '',
     document: '',
     email: '',
     phone: '',
     risk_level: 'low',
-  })
+  }
+  const [formData, setFormData] = useState(defaultForm)
 
   const fetchCustomers = async () => {
     if (!activeTenant) return
@@ -44,25 +49,46 @@ export default function Clientes() {
     e.preventDefault()
     if (!activeTenant) return
     setLoading(true)
-    const { error } = await supabase
-      .from('customers')
-      .insert([{ ...formData, tenant_id: activeTenant }])
+
+    const payload = { ...formData, tenant_id: activeTenant }
+    if (!payload.id) delete (payload as any).id
+
+    const { error } = payload.id
+      ? await supabase.from('customers').update(payload).eq('id', payload.id)
+      : await supabase.from('customers').insert([payload])
+
     if (error) {
       toast.error('Erro ao salvar cliente')
     } else {
-      toast.success('Cliente cadastrado com sucesso!')
+      toast.success('Cliente salvo com sucesso!')
       setIsModalOpen(false)
       fetchCustomers()
-      setFormData({
-        name: '',
-        document: '',
-        email: '',
-        phone: '',
-        risk_level: 'low',
-      })
+      setFormData(defaultForm)
     }
     setLoading(false)
   }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este cliente?')) return
+    const { error } = await supabase.from('customers').delete().eq('id', id)
+    if (error) toast.error('Erro ao excluir cliente')
+    else {
+      toast.success('Cliente excluído com sucesso')
+      fetchCustomers()
+    }
+  }
+
+  const openModal = (customer?: any) => {
+    setFormData(customer || defaultForm)
+    setIsModalOpen(true)
+  }
+
+  const filtered = customers.filter(
+    (c) =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.document?.includes(search) ||
+      c.email?.toLowerCase().includes(search.toLowerCase()),
+  )
 
   const riskColors: any = {
     low: 'text-emerald-600 bg-emerald-500/10',
@@ -86,7 +112,7 @@ export default function Clientes() {
             Gerencie sua carteira de clientes e níveis de risco.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+        <Button onClick={() => openModal()} className="gap-2">
           <Plus className="w-4 h-4" /> Novo Cliente
         </Button>
       </div>
@@ -97,8 +123,10 @@ export default function Clientes() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar por nome ou documento..."
+              placeholder="Buscar por nome, documento ou email..."
               className="pl-9 bg-background"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>
@@ -110,20 +138,21 @@ export default function Clientes() {
                 <th className="px-6 py-3 font-medium">Contato</th>
                 <th className="px-6 py-3 font-medium">Comportamento</th>
                 <th className="px-6 py-3 font-medium">Risco</th>
+                <th className="px-6 py-3 font-medium text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {customers.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-6 py-12 text-center text-muted-foreground"
                   >
-                    Nenhum cliente cadastrado em sua carteira.
+                    Nenhum cliente encontrado.
                   </td>
                 </tr>
               ) : (
-                customers.map((c) => (
+                filtered.map((c) => (
                   <tr
                     key={c.id}
                     className="hover:bg-muted/50 transition-colors"
@@ -159,6 +188,22 @@ export default function Clientes() {
                         {riskLabels[c.risk_level] || 'Desconhecido'}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-right space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openModal(c)}
+                      >
+                        <Edit2 className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(c.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -170,7 +215,7 @@ export default function Clientes() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Novo Cliente"
+        title={formData.id ? 'Editar Cliente' : 'Novo Cliente'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

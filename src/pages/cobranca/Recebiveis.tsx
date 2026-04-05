@@ -10,6 +10,9 @@ import {
   Calendar as CalendarIcon,
   Handshake,
   AlertCircle,
+  Search,
+  Edit2,
+  Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -26,6 +29,7 @@ export default function Recebiveis() {
   const { activeTenant } = useTenant()
   const [receivables, setReceivables] = useState<any[]>([])
   const [customers, setCustomers] = useState<any[]>([])
+  const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isPromiseModalOpen, setIsPromiseModalOpen] = useState(false)
   const [selectedReceivable, setSelectedReceivable] = useState<string | null>(
@@ -33,12 +37,14 @@ export default function Recebiveis() {
   )
   const [loading, setLoading] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const defaultForm = {
+    id: '',
     customer_id: '',
     amount: '',
     due_date: '',
     status: 'open',
-  })
+  }
+  const [formData, setFormData] = useState(defaultForm)
   const [promiseData, setPromiseData] = useState({
     promise_date: '',
     notes: '',
@@ -69,21 +75,36 @@ export default function Recebiveis() {
     e.preventDefault()
     if (!activeTenant) return
     setLoading(true)
-    const { error } = await supabase.from('receivables').insert([
-      {
-        ...formData,
-        tenant_id: activeTenant,
-        amount: parseFloat(formData.amount),
-      },
-    ])
+
+    const payload = {
+      ...formData,
+      tenant_id: activeTenant,
+      amount: parseFloat(formData.amount),
+    }
+    if (!payload.id) delete (payload as any).id
+
+    const { error } = payload.id
+      ? await supabase.from('receivables').update(payload).eq('id', payload.id)
+      : await supabase.from('receivables').insert([payload])
+
     if (error) toast.error('Erro ao salvar título')
     else {
-      toast.success('Título cadastrado!')
+      toast.success('Título salvo com sucesso!')
       setIsModalOpen(false)
       fetchData()
-      setFormData({ customer_id: '', amount: '', due_date: '', status: 'open' })
+      setFormData(defaultForm)
     }
     setLoading(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir este título?')) return
+    const { error } = await supabase.from('receivables').delete().eq('id', id)
+    if (error) toast.error('Erro ao excluir título')
+    else {
+      toast.success('Título excluído com sucesso')
+      fetchData()
+    }
   }
 
   const handlePromiseSubmit = async (e: React.FormEvent) => {
@@ -113,6 +134,17 @@ export default function Recebiveis() {
     }
     setLoading(false)
   }
+
+  const openModal = (receivable?: any) => {
+    setFormData(receivable || defaultForm)
+    setIsModalOpen(true)
+  }
+
+  const filtered = receivables.filter(
+    (r) =>
+      r.customer?.name.toLowerCase().includes(search.toLowerCase()) ||
+      r.status.toLowerCase().includes(search.toLowerCase()),
+  )
 
   const statusColors: any = {
     open: 'text-blue-600 bg-blue-500/10',
@@ -146,13 +178,25 @@ export default function Recebiveis() {
           >
             <Upload className="w-4 h-4" /> Importar
           </Button>
-          <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+          <Button onClick={() => openModal()} className="gap-2">
             <Plus className="w-4 h-4" /> Novo Título
           </Button>
         </div>
       </div>
 
       <div className="bg-card border rounded-lg overflow-hidden shadow-sm">
+        <div className="p-4 border-b flex items-center gap-4 bg-muted/20">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por cliente ou status..."
+              className="pl-9 bg-background"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/40 border-b">
@@ -165,17 +209,17 @@ export default function Recebiveis() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {receivables.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-6 py-12 text-center text-muted-foreground"
                   >
-                    Nenhum título cadastrado.
+                    Nenhum título encontrado.
                   </td>
                 </tr>
               ) : (
-                receivables.map((r) => (
+                filtered.map((r) => (
                   <tr
                     key={r.id}
                     className="hover:bg-muted/50 transition-colors"
@@ -204,7 +248,7 @@ export default function Recebiveis() {
                         {statusLabels[r.status] || r.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right space-x-2">
                       {r.status !== 'paid' && (
                         <Button
                           variant="ghost"
@@ -218,6 +262,20 @@ export default function Recebiveis() {
                           <Handshake className="w-3 h-3 mr-1" /> Promessa
                         </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openModal(r)}
+                      >
+                        <Edit2 className="w-4 h-4 text-muted-foreground" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(r.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
                     </td>
                   </tr>
                 ))
@@ -230,7 +288,7 @@ export default function Recebiveis() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Novo Título"
+        title={formData.id ? 'Editar Título' : 'Novo Título'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -314,6 +372,21 @@ export default function Recebiveis() {
                 name="due_date"
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Status</label>
+            <select
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              value={formData.status}
+              onChange={(e) =>
+                setFormData({ ...formData, status: e.target.value })
+              }
+            >
+              <option value="open">Aberto</option>
+              <option value="overdue">Atrasado</option>
+              <option value="promised">Promessa</option>
+              <option value="paid">Pago</option>
+            </select>
           </div>
           <div className="pt-4 flex justify-end gap-2">
             <Button

@@ -4,22 +4,33 @@ import { useTenant } from '@/hooks/use-tenant'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Modal } from '@/components/ui/modal'
-import { Plus, Mail, MessageSquare, Smartphone } from 'lucide-react'
+import {
+  Plus,
+  Mail,
+  MessageSquare,
+  Smartphone,
+  Search,
+  Edit2,
+  Trash2,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
 
 export default function Reguas() {
   const { activeTenant } = useTenant()
   const [rules, setRules] = useState<any[]>([])
+  const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  const [formData, setFormData] = useState({
+  const defaultForm = {
+    id: '',
     name: '',
     days_offset: '0',
     channel: 'email',
     template: '',
-  })
+  }
+  const [formData, setFormData] = useState(defaultForm)
 
   const fetchRules = async () => {
     if (!activeTenant) return
@@ -39,26 +50,48 @@ export default function Reguas() {
     e.preventDefault()
     if (!activeTenant) return
     setLoading(true)
-    const { error } = await supabase.from('billing_rules').insert([
-      {
-        ...formData,
-        tenant_id: activeTenant,
-        days_offset: parseInt(formData.days_offset),
-      },
-    ])
+
+    const payload = {
+      ...formData,
+      tenant_id: activeTenant,
+      days_offset: parseInt(formData.days_offset),
+    }
+    if (!payload.id) delete (payload as any).id
+
+    const { error } = payload.id
+      ? await supabase
+          .from('billing_rules')
+          .update(payload)
+          .eq('id', payload.id)
+      : await supabase.from('billing_rules').insert([payload])
+
     if (error) toast.error('Erro ao salvar régua')
     else {
-      toast.success('Régua cadastrada com sucesso!')
+      toast.success('Régua salva com sucesso!')
       setIsModalOpen(false)
       fetchRules()
-      setFormData({
-        name: '',
-        days_offset: '0',
-        channel: 'email',
-        template: '',
-      })
+      setFormData(defaultForm)
     }
     setLoading(false)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja excluir esta regra?')) return
+    const { error } = await supabase.from('billing_rules').delete().eq('id', id)
+    if (error) toast.error('Erro ao excluir regra')
+    else {
+      toast.success('Regra excluída com sucesso')
+      fetchRules()
+    }
+  }
+
+  const openModal = (rule?: any) => {
+    setFormData(
+      rule
+        ? { ...rule, days_offset: rule.days_offset.toString() }
+        : defaultForm,
+    )
+    setIsModalOpen(true)
   }
 
   const toggleActive = async (id: string, current: boolean) => {
@@ -83,6 +116,10 @@ export default function Reguas() {
     return `${days} dias de atraso`
   }
 
+  const filtered = rules.filter((r) =>
+    r.name.toLowerCase().includes(search.toLowerCase()),
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -94,18 +131,31 @@ export default function Reguas() {
             Configure os fluxos automáticos de lembretes e cobranças.
           </p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="gap-2">
+        <Button onClick={() => openModal()} className="gap-2">
           <Plus className="w-4 h-4" /> Nova Regra
         </Button>
       </div>
 
+      <div className="bg-card border rounded-lg p-4 mb-4 flex items-center gap-4 shadow-sm bg-muted/20">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Buscar por nome da regra..."
+            className="pl-9 bg-background"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {rules.length === 0 ? (
+        {filtered.length === 0 ? (
           <div className="col-span-full py-12 text-center text-muted-foreground bg-card border rounded-lg shadow-sm">
-            Nenhuma regra configurada na régua.
+            Nenhuma regra encontrada.
           </div>
         ) : (
-          rules.map((r) => (
+          filtered.map((r) => (
             <div
               key={r.id}
               className={`p-5 rounded-lg border bg-card shadow-sm relative overflow-hidden transition-all ${!r.active ? 'opacity-60 grayscale-[0.5]' : ''}`}
@@ -124,10 +174,28 @@ export default function Reguas() {
                     </p>
                   </div>
                 </div>
-                <Switch
-                  checked={r.active}
-                  onCheckedChange={() => toggleActive(r.id, r.active)}
-                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => openModal(r)}
+                  >
+                    <Edit2 className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleDelete(r.id)}
+                  >
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                  <Switch
+                    checked={r.active}
+                    onCheckedChange={() => toggleActive(r.id, r.active)}
+                  />
+                </div>
               </div>
               <div className="bg-muted/40 p-3 rounded-md mb-4 border border-muted">
                 <div className="text-xs font-medium text-foreground mb-1">
@@ -148,7 +216,7 @@ export default function Reguas() {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Nova Regra de Cobrança"
+        title={formData.id ? 'Editar Regra' : 'Nova Regra de Cobrança'}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
