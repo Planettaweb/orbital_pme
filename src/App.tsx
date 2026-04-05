@@ -25,6 +25,10 @@ import ClientesCob from './pages/cobranca/Clientes'
 import RecebiveisCob from './pages/cobranca/Recebiveis'
 import ReguasCob from './pages/cobranca/Reguas'
 import IntegracoesCob from './pages/cobranca/Integracoes'
+import DocumentosFiscais from './pages/fiscal/Documentos'
+import ApuracaoFiscal from './pages/fiscal/Apuracao'
+import CertidoesFiscais from './pages/fiscal/Certidoes'
+import RelatoriosFiscais from './pages/fiscal/Relatorios'
 
 // ONLY IMPORT AND RENDER WORKING PAGES, NEVER ADD PLACEHOLDER COMPONENTS OR PAGES IN THIS FILE
 // AVOID REMOVING ANY CONTEXT PROVIDERS FROM THIS FILE (e.g. TooltipProvider, Toaster, Sonner)
@@ -137,6 +141,40 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <IntegracoesCob />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* FiscalPulse PME Routes */}
+            <Route
+              path="/fiscal/documentos"
+              element={
+                <ProtectedRoute>
+                  <DocumentosFiscais />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/fiscal/apuracao"
+              element={
+                <ProtectedRoute>
+                  <ApuracaoFiscal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/fiscal/certidoes"
+              element={
+                <ProtectedRoute>
+                  <CertidoesFiscais />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/fiscal/relatorios"
+              element={
+                <ProtectedRoute>
+                  <RelatoriosFiscais />
                 </ProtectedRoute>
               }
             />

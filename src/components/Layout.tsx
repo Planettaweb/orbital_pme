@@ -15,6 +15,10 @@ import {
   Wallet,
   GitBranch,
   Share2,
+  FileText,
+  Calculator,
+  CheckSquare,
+  BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
@@ -200,6 +204,38 @@ export default function Layout() {
               >
                 <Share2 className="w-4 h-4" />
                 Integrações (API)
+              </Link>
+
+              <div className="pt-4 pb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
+                FiscalPulse PME
+              </div>
+              <Link
+                to="/fiscal/documentos"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <FileText className="w-4 h-4" />
+                Documentos Fiscais
+              </Link>
+              <Link
+                to="/fiscal/apuracao"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <Calculator className="w-4 h-4" />
+                Apuração (Impostos)
+              </Link>
+              <Link
+                to="/fiscal/certidoes"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <CheckSquare className="w-4 h-4" />
+                Certidões (CND)
+              </Link>
+              <Link
+                to="/fiscal/relatorios"
+                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              >
+                <BarChart3 className="w-4 h-4" />
+                Relatórios Fiscais
               </Link>
             </nav>
             <div className="border-t pt-4 space-y-2">
