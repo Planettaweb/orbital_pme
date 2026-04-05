@@ -88,7 +88,9 @@ export function ContractModal({
           maxSizeMb: data.max_file_size_mb || 10,
         })
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Failed to load limits', e)
+    }
   }
 
   const loadAttachments = async (contractId: string) => {
