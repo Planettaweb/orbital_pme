@@ -20,10 +20,64 @@ import {
   CheckSquare,
   BarChart3,
   X,
+  ChevronDown,
+  Briefcase,
+  FileSignature,
+  Landmark,
+  Receipt,
 } from 'lucide-react'
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ThemeProvider } from './theme-provider'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+
+const NavItem = ({ to, icon: Icon, children, onClick, active }: any) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    className={cn(
+      'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+      active
+        ? 'bg-primary/10 text-primary'
+        : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+    )}
+  >
+    <Icon className="w-4 h-4" />
+    {children}
+  </Link>
+)
+
+const NavGroup = ({
+  title,
+  icon: Icon,
+  children,
+  defaultOpen = false,
+}: any) => {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+  return (
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="space-y-1">
+      <CollapsibleTrigger className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors group">
+        <div className="flex items-center gap-3">
+          <Icon className="w-4 h-4" />
+          {title}
+        </div>
+        <ChevronDown
+          className={cn(
+            'w-4 h-4 transition-transform duration-200 opacity-50 group-hover:opacity-100',
+            isOpen && 'rotate-180',
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="space-y-1 pl-4">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
 
 export default function Layout() {
   const { user, signOut, isPlatformAdmin } = useAuth()
@@ -147,152 +201,177 @@ export default function Layout() {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 flex flex-col">
-            <nav className="space-y-2 flex-1">
-              <Link
-                to="/dashboard"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                Painel Executivo
-              </Link>
+            <nav className="space-y-4 flex-1">
+              <div className="space-y-1">
+                <NavItem
+                  to="/dashboard"
+                  icon={LayoutDashboard}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/dashboard'}
+                >
+                  Painel Executivo
+                </NavItem>
+              </div>
+
               {isAdmin && (
-                <>
-                  <div className="pt-4 pb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
-                    Administração
-                  </div>
+                <NavGroup
+                  title="Administração"
+                  icon={Shield}
+                  defaultOpen={location.pathname.startsWith('/admin')}
+                >
                   {isPlatformAdmin && (
-                    <Link
+                    <NavItem
                       to="/admin/clients"
+                      icon={Building2}
                       onClick={() => setIsSidebarOpen(false)}
-                      className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium text-horizon-gold"
+                      active={location.pathname === '/admin/clients'}
                     >
-                      <Building2 className="w-4 h-4" />
                       Empresas (Tenants)
-                    </Link>
+                    </NavItem>
                   )}
-                  <Link
+                  <NavItem
                     to="/admin/users"
+                    icon={Users}
                     onClick={() => setIsSidebarOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                    active={location.pathname === '/admin/users'}
                   >
-                    <Users className="w-4 h-4" />
                     Usuários
-                  </Link>
-                  <Link
+                  </NavItem>
+                  <NavItem
                     to="/admin/roles"
+                    icon={Shield}
                     onClick={() => setIsSidebarOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                    active={location.pathname === '/admin/roles'}
                   >
-                    <Shield className="w-4 h-4" />
                     Cargos & Permissões
-                  </Link>
-                  <Link
+                  </NavItem>
+                  <NavItem
                     to="/admin/tenants"
+                    icon={Settings2}
                     onClick={() => setIsSidebarOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                    active={location.pathname === '/admin/tenants'}
                   >
-                    <Settings2 className="w-4 h-4" />
                     Organização
-                  </Link>
-                </>
+                  </NavItem>
+                </NavGroup>
               )}
 
-              <div className="pt-4 pb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
-                Cobrança Viva
-              </div>
-              <Link
-                to="/cobranca/clientes"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              <NavGroup
+                title="Cobrança Viva"
+                icon={Receipt}
+                defaultOpen={location.pathname.startsWith('/cobranca')}
               >
-                <Users className="w-4 h-4" />
-                Clientes
-              </Link>
-              <Link
-                to="/cobranca/recebiveis"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <Wallet className="w-4 h-4" />
-                Títulos & Faturas
-              </Link>
-              <Link
-                to="/cobranca/reguas"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <GitBranch className="w-4 h-4" />
-                Régua de Cobrança
-              </Link>
-              <Link
-                to="/cobranca/integracoes"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <Share2 className="w-4 h-4" />
-                Integrações (API)
-              </Link>
+                <NavItem
+                  to="/cobranca/clientes"
+                  icon={Users}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/cobranca/clientes'}
+                >
+                  Clientes
+                </NavItem>
+                <NavItem
+                  to="/cobranca/recebiveis"
+                  icon={Wallet}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/cobranca/recebiveis'}
+                >
+                  Títulos & Faturas
+                </NavItem>
+                <NavItem
+                  to="/cobranca/reguas"
+                  icon={GitBranch}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/cobranca/reguas'}
+                >
+                  Régua de Cobrança
+                </NavItem>
+                <NavItem
+                  to="/cobranca/integracoes"
+                  icon={Share2}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/cobranca/integracoes'}
+                >
+                  Integrações (API)
+                </NavItem>
+              </NavGroup>
 
-              <div className="pt-4 pb-2 px-3 text-xs font-semibold text-muted-foreground uppercase">
-                FiscalPulse PME
-              </div>
-              <Link
-                to="/fiscal/documentos"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+              <NavGroup
+                title="FiscalPulse PME"
+                icon={Landmark}
+                defaultOpen={location.pathname.startsWith('/fiscal')}
               >
-                <FileText className="w-4 h-4" />
-                Documentos Fiscais
-              </Link>
-              <Link
-                to="/fiscal/apuracao"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                <NavItem
+                  to="/fiscal/documentos"
+                  icon={FileText}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/fiscal/documentos'}
+                >
+                  Documentos Fiscais
+                </NavItem>
+                <NavItem
+                  to="/fiscal/apuracao"
+                  icon={Calculator}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/fiscal/apuracao'}
+                >
+                  Apuração (Impostos)
+                </NavItem>
+                <NavItem
+                  to="/fiscal/certidoes"
+                  icon={CheckSquare}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/fiscal/certidoes'}
+                >
+                  Certidões (CND)
+                </NavItem>
+                <NavItem
+                  to="/fiscal/relatorios"
+                  icon={BarChart3}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/fiscal/relatorios'}
+                >
+                  Relatórios Fiscais
+                </NavItem>
+              </NavGroup>
+
+              <NavGroup
+                title="Contrato Vivo"
+                icon={Briefcase}
+                defaultOpen={location.pathname.startsWith('/contratos')}
               >
-                <Calculator className="w-4 h-4" />
-                Apuração (Impostos)
-              </Link>
-              <Link
-                to="/fiscal/certidoes"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <CheckSquare className="w-4 h-4" />
-                Certidões (CND)
-              </Link>
-              <Link
-                to="/fiscal/relatorios"
-                onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
-              >
-                <BarChart3 className="w-4 h-4" />
-                Relatórios Fiscais
-              </Link>
+                <NavItem
+                  to="/contratos"
+                  icon={FileSignature}
+                  onClick={() => setIsSidebarOpen(false)}
+                  active={location.pathname === '/contratos'}
+                >
+                  Gestão de Contratos
+                </NavItem>
+              </NavGroup>
             </nav>
-            <div className="border-t pt-4 mt-4 shrink-0 space-y-2">
-              <Link
+            <div className="border-t pt-4 mt-4 shrink-0 space-y-1">
+              <NavItem
                 to="/profile"
+                icon={UserIcon}
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                active={location.pathname === '/profile'}
               >
-                <UserIcon className="w-4 h-4" />
                 Meu Perfil
-              </Link>
-              <Link
+              </NavItem>
+              <NavItem
                 to="/settings"
+                icon={Settings}
                 onClick={() => setIsSidebarOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted text-sm font-medium"
+                active={location.pathname === '/settings'}
               >
-                <Settings className="w-4 h-4" />
                 Configurações
-              </Link>
+              </NavItem>
               <button
                 onClick={() => {
                   setIsSidebarOpen(false)
                   signOut()
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-destructive hover:text-destructive-foreground text-sm font-medium transition-colors"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-destructive hover:text-destructive-foreground text-muted-foreground text-sm font-medium transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 Sair
