@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Switch } from '@/components/ui/switch'
+import { Play } from 'lucide-react'
 
 export default function Reguas() {
   const { activeTenant } = useTenant()
@@ -22,6 +23,7 @@ export default function Reguas() {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [processing, setProcessing] = useState(false)
 
   const defaultForm = {
     id: '',
@@ -123,6 +125,26 @@ export default function Reguas() {
     return `${days} dias de atraso`
   }
 
+  const triggerRules = async () => {
+    setProcessing(true)
+    const { data, error } = await supabase.functions.invoke(
+      'process-billing-rules',
+      {
+        method: 'POST',
+      },
+    )
+    setProcessing(false)
+
+    if (error) {
+      toast.error('Erro ao processar regras: ' + error.message)
+    } else {
+      toast.success(
+        `Processamento concluído! ${data.sent || 0} notificações enviadas.`,
+      )
+      fetchRules()
+    }
+  }
+
   const filtered = rules.filter((r) =>
     r.name.toLowerCase().includes(search.toLowerCase()),
   )
@@ -138,9 +160,20 @@ export default function Reguas() {
             Configure os fluxos automáticos de lembretes e cobranças.
           </p>
         </div>
-        <Button onClick={() => openModal()} className="gap-2">
-          <Plus className="w-4 h-4" /> Nova Regra
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button
+            onClick={triggerRules}
+            variant="outline"
+            className="gap-2"
+            disabled={processing}
+          >
+            <Play className="w-4 h-4" />{' '}
+            {processing ? 'Processando...' : 'Processar Regras'}
+          </Button>
+          <Button onClick={() => openModal()} className="gap-2">
+            <Plus className="w-4 h-4" /> Nova Regra
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card border rounded-lg p-4 mb-4 flex items-center gap-4 shadow-sm bg-muted/20">
