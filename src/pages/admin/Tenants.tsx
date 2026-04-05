@@ -59,6 +59,8 @@ export default function Tenants() {
         .update({
           name: tenant.name,
           branding: tenant.branding,
+          max_files_per_contract: tenant.max_files_per_contract,
+          max_file_size_mb: tenant.max_file_size_mb,
         })
         .eq('id', tenant.id)
       if (error) throw error
@@ -163,13 +165,49 @@ export default function Tenants() {
                   />
                 </div>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-border/50">
+                <div className="space-y-2">
+                  <Label>Arquivos por Contrato (Max)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={tenant?.max_files_per_contract || 5}
+                    onChange={(e) =>
+                      setTenant({
+                        ...tenant,
+                        max_files_per_contract: parseInt(e.target.value),
+                      })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Limite de uploads por contrato.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tamanho Máx. Arquivo (MB)</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={tenant?.max_file_size_mb || 10}
+                    onChange={(e) =>
+                      setTenant({
+                        ...tenant,
+                        max_file_size_mb: parseInt(e.target.value),
+                      })
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tamanho máximo em Megabytes.
+                  </p>
+                </div>
+              </div>
               <Button
                 type="submit"
                 disabled={saving}
                 className="w-full sm:w-auto"
               >
                 {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}{' '}
-                Salvar Identidade Visual
+                Salvar Organização
               </Button>
             </form>
           </CardContent>

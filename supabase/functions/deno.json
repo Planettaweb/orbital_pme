@@ -1,6 +1,7 @@
 {
   "_versions": {
     "send-email": 1,
-    "process-billing-rules": 1
+    "process-billing-rules": 1,
+    "check-expiring-contracts": 1
   }
 }
