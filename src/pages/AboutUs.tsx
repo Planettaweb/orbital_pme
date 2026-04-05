@@ -98,7 +98,9 @@ export default function AboutUs() {
             asChild
           >
             <Link to="https://planettaweb.com.br">
-              Conheça mais a nossa empresa.
+              {' '}
+              target="_blank" rel="noopener noreferrer" Conheça mais a nossa
+              empresa.
             </Link>
           </Button>
         </div>
