@@ -5,110 +5,141 @@ import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import {
   Search,
-  Plus,
   FileText,
   AlertTriangle,
   CheckCircle2,
   Clock,
   Trash2,
+  Edit2,
+  FileUp,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { useCsvImport } from '@/hooks/use-csv-import'
-
-interface FiscalDocument {
-  id: string
-  document_number: string
-  issue_date: string
-  status: string
-  risk_level: string | null
-}
+import { useFileImport } from '@/hooks/use-file-import'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export default function DocumentosFiscais() {
-  const [documents, setDocuments] = useState<FiscalDocument[]>([])
+  const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [editingDoc, setEditingDoc] = useState<any>(null)
   const { toast } = useToast()
 
-  const fetchDocuments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('fiscal_documents')
-        .select('*')
-        .order('issue_date', { ascending: false })
-      if (error) throw error
-      setDocuments(data || [])
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
+  const fetchDocs = async () => {
+    setLoading(true)
+    const { data } = await supabase
+      .from('fiscal_documents')
+      .select('*')
+      .order('issue_date', { ascending: false })
+    if (data) setDocuments(data)
+    setLoading(false)
   }
 
   useEffect(() => {
-    fetchDocuments()
+    fetchDocs()
   }, [])
 
-  const { fileInputRef, handleFileUpload, triggerImport } = useCsvImport(
-    'fiscal_documents',
-    (values, tenantId) => {
-      if (!values[0]) return null
-      return {
-        tenant_id: tenantId,
-        document_number: values[0]?.trim(),
-        issue_date: values[1]?.trim() || new Date().toISOString().split('T')[0],
-        status: values[2]?.trim() || 'valid',
-        risk_level: values[3]?.trim() || 'low',
-      }
-    },
-    fetchDocuments,
-  )
+  const { fileInputRef, handleFileUpload, triggerImport, isImporting } =
+    useFileImport(
+      'fiscal_documents',
+      (values, tenantId) =>
+        values[0]
+          ? {
+              tenant_id: tenantId,
+              document_number: values[0].trim(),
+              issue_date:
+                values[1]?.trim() || new Date().toISOString().split('T')[0],
+              status: values[2]?.trim() || 'valid',
+              risk_level: values[3]?.trim() || 'low',
+            }
+          : null,
+      (node, tenantId) =>
+        node.querySelector('document_number')?.textContent
+          ? {
+              tenant_id: tenantId,
+              document_number:
+                node.querySelector('document_number')!.textContent!,
+              issue_date:
+                node.querySelector('issue_date')?.textContent ||
+                new Date().toISOString().split('T')[0],
+              status: node.querySelector('status')?.textContent || 'valid',
+              risk_level:
+                node.querySelector('risk_level')?.textContent || 'low',
+            }
+          : null,
+      'document',
+      fetchDocs,
+    )
 
   const handleDelete = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('fiscal_documents')
-        .delete()
-        .eq('id', id)
-      if (error) throw error
-      toast({ title: 'Sucesso', description: 'Documento excluído.' })
-      fetchDocuments()
-    } catch (error: any) {
-      toast({
-        title: 'Erro',
-        description: error.message,
-        variant: 'destructive',
-      })
+    const { error } = await supabase
+      .from('fiscal_documents')
+      .delete()
+      .eq('id', id)
+    if (!error) {
+      toast({ title: 'Sucesso', description: 'Excluído com sucesso.' })
+      fetchDocs()
     }
   }
 
-  const filteredDocs = documents.filter((doc) =>
-    doc.document_number.toLowerCase().includes(searchTerm.toLowerCase()),
+  const handleUpdate = async () => {
+    if (!editingDoc) return
+    const { error } = await supabase
+      .from('fiscal_documents')
+      .update({
+        document_number: editingDoc.document_number,
+        issue_date: editingDoc.issue_date,
+        status: editingDoc.status,
+        risk_level: editingDoc.risk_level,
+      })
+      .eq('id', editingDoc.id)
+    if (!error) {
+      toast({ title: 'Sucesso', description: 'Atualizado com sucesso.' })
+      setEditingDoc(null)
+      fetchDocs()
+    }
+  }
+
+  const filtered = documents.filter((d) =>
+    d.document_number.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Documentos Fiscais
-          </h1>
+          <h1 className="text-2xl font-bold">Documentos Fiscais</h1>
           <p className="text-muted-foreground">
-            Monitore notas fiscais e importe arquivos CSV.
+            Monitore notas fiscais (XML/CSV).
           </p>
         </div>
         <input
           type="file"
-          accept=".csv"
+          accept=".csv,.xml"
           className="hidden"
           ref={fileInputRef}
           onChange={handleFileUpload}
         />
         <Button
-          className="bg-telemetry-blue hover:bg-telemetry-blue/90 text-white"
+          className="bg-telemetry-blue hover:bg-telemetry-blue/90"
           onClick={triggerImport}
+          disabled={isImporting}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Importar CSV
+          <FileUp className="w-4 h-4 mr-2" />{' '}
+          {isImporting ? 'Importando...' : 'Importar (XML/CSV)'}
         </Button>
       </div>
 
@@ -128,11 +159,11 @@ export default function DocumentosFiscais() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-muted-foreground uppercase bg-muted/20">
               <tr>
-                <th className="px-6 py-4 font-medium">Documento</th>
-                <th className="px-6 py-4 font-medium">Emissão</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium">Risco</th>
-                <th className="px-6 py-4 text-right font-medium">Ações</th>
+                <th className="px-6 py-4">Documento</th>
+                <th className="px-6 py-4">Emissão</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Risco</th>
+                <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -145,7 +176,7 @@ export default function DocumentosFiscais() {
                     Carregando...
                   </td>
                 </tr>
-              ) : filteredDocs.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
@@ -155,63 +186,59 @@ export default function DocumentosFiscais() {
                   </td>
                 </tr>
               ) : (
-                filteredDocs.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    className="bg-card hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap font-medium flex items-center gap-3">
+                filtered.map((doc) => (
+                  <tr key={doc.id} className="hover:bg-muted/30">
+                    <td className="px-6 py-4 font-medium flex items-center gap-3">
                       <div className="p-2 bg-telemetry-blue/10 rounded-lg text-telemetry-blue">
                         <FileText className="w-4 h-4" />
                       </div>
                       {doc.document_number}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       {format(new Date(doc.issue_date), 'dd/MM/yyyy')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {doc.status === 'valid' && (
-                        <span className="text-green-600 font-medium">
-                          Autorizada
-                        </span>
-                      )}
-                      {doc.status === 'pending' && (
-                        <span className="text-yellow-600 font-medium">
-                          Pendente
-                        </span>
-                      )}
-                      {doc.status === 'rejected' && (
-                        <span className="text-red-600 font-medium">
-                          Rejeitada
-                        </span>
+                    <td className="px-6 py-4">
+                      {doc.status === 'valid' ? (
+                        <span className="text-green-600">Autorizada</span>
+                      ) : doc.status === 'pending' ? (
+                        <span className="text-yellow-600">Pendente</span>
+                      ) : (
+                        <span className="text-red-600">Rejeitada</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {doc.risk_level === 'low' && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                    <td className="px-6 py-4">
+                      {doc.risk_level === 'low' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
                           <CheckCircle2 className="w-3.5 h-3.5" /> Baixo
                         </span>
-                      )}
-                      {doc.risk_level === 'medium' && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                      ) : doc.risk_level === 'medium' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-yellow-100 text-yellow-800">
                           <Clock className="w-3.5 h-3.5" /> Médio
                         </span>
-                      )}
-                      {doc.risk_level === 'high' && (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs bg-red-100 text-red-800">
                           <AlertTriangle className="w-3.5 h-3.5" /> Alto
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(doc.id)}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingDoc(doc)}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(doc.id)}
+                          className="text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -220,6 +247,80 @@ export default function DocumentosFiscais() {
           </table>
         </div>
       </div>
+
+      <Dialog
+        open={!!editingDoc}
+        onOpenChange={(o) => !o && setEditingDoc(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Documento</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Número</Label>
+              <Input
+                value={editingDoc?.document_number || ''}
+                onChange={(e) =>
+                  setEditingDoc({
+                    ...editingDoc,
+                    document_number: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Data de Emissão</Label>
+              <Input
+                type="date"
+                value={editingDoc?.issue_date || ''}
+                onChange={(e) =>
+                  setEditingDoc({ ...editingDoc, issue_date: e.target.value })
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Status</Label>
+              <Select
+                value={editingDoc?.status || ''}
+                onValueChange={(v) =>
+                  setEditingDoc({ ...editingDoc, status: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="valid">Autorizada</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="rejected">Rejeitada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Risco</Label>
+              <Select
+                value={editingDoc?.risk_level || ''}
+                onValueChange={(v) =>
+                  setEditingDoc({ ...editingDoc, risk_level: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Baixo</SelectItem>
+                  <SelectItem value="medium">Médio</SelectItem>
+                  <SelectItem value="high">Alto</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleUpdate}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
